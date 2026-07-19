@@ -5,6 +5,7 @@ on:
     paths:
       - "bootstrap/part*.b64"
       - ".github/workflows/unpack-explorer.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -22,7 +23,7 @@ jobs:
           cat bootstrap/part00.b64 bootstrap/part01.b64 bootstrap/part02.b64 bootstrap/part03.b64 bootstrap/part04.b64 > /tmp/explorer.b64
           base64 --decode /tmp/explorer.b64 > /tmp/explorer.tar.gz
           tar -xzf /tmp/explorer.tar.gz -C .
-          rm -rf bootstrap
+          rm -f bootstrap/explorer.tar.gz.b64
 
       - name: Publicar arquivos definitivos
         shell: bash
