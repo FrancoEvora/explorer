@@ -25,6 +25,74 @@ jobs:
           tar -xzf /tmp/explorer.tar.gz -C .
           rm -f bootstrap/explorer.tar.gz.b64
 
+      - name: Corrigir autenticação
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          cloud = Path('cloud.js')
+          js = cloud.read_text()
+
+          js = js.replace(
+              "  async function signUp() {\n    if (!client) return;\n",
+              "  async function signUp() {\n    if (!client && window.supabase?.createClient) {\n      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });\n    }\n    if (!client) {\n      setAuthMessage('A conexão segura ainda está carregando. Aguarde um instante e tente novamente.', 'error');\n      return;\n    }\n",
+              1
+          )
+          js = js.replace(
+              "  async function signIn() {\n    if (!client) return;\n",
+              "  async function signIn() {\n    if (!client && window.supabase?.createClient) {\n      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });\n    }\n    if (!client) {\n      setAuthMessage('A conexão segura ainda está carregando. Aguarde um instante e tente novamente.', 'error');\n      return;\n    }\n",
+              1
+          )
+          js = js.replace(
+              "    signOut,\n    getUser: () => user,",
+              "    signOut,\n    signUp,\n    signIn,\n    getUser: () => user,",
+              1
+          )
+          cloud.write_text(js)
+
+          app = Path('app.js')
+          appjs = app.read_text()
+          appjs = appjs.replace(
+              "document.addEventListener('DOMContentLoaded', bootstrap);",
+              "if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', () => bootstrap().catch((error) => console.error('Falha ao iniciar Explorer', error)), { once: true }); } else { queueMicrotask(() => bootstrap().catch((error) => console.error('Falha ao iniciar Explorer', error))); }",
+              1
+          )
+          app.write_text(appjs)
+
+          index = Path('index.html')
+          html = index.read_text()
+          marker = 'explorer-auth-click-bridge'
+          bridge = '''
+  <script id="explorer-auth-click-bridge">
+  document.addEventListener('click', function(event) {
+    var signup = event.target.closest && event.target.closest('#btnSignUp');
+    var signin = event.target.closest && event.target.closest('#btnSignIn');
+    if (!signup && !signin) return;
+    var cloud = window.ExplorerCloud;
+    if (!cloud) {
+      var message = document.getElementById('authMessage');
+      if (message) {
+        message.textContent = 'A conexão segura ainda está carregando. Aguarde um instante e tente novamente.';
+        message.dataset.tone = 'error';
+      }
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (signup && cloud.signUp) cloud.signUp();
+    if (signin && cloud.signIn) cloud.signIn();
+  }, true);
+  </script>
+'''
+          if marker not in html:
+              html = html.replace('</body>', bridge + '\n</body>')
+          html = html.replace('Explorer · v1.0', 'Explorer · v1.0.3')
+          html = html.replace('Explorer v1.0</span>', 'Explorer v1.0.3</span>')
+          html = html.replace('>v1.0</span>', '>v1.0.3</span>')
+          index.write_text(html)
+          PY
+
       - name: Publicar arquivos definitivos
         shell: bash
         run: |
@@ -34,5 +102,5 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "Publica Explorer v1.0 com Supabase"
+          git commit -m "Publica Explorer v1.0.3 com autenticação corrigida"
           git push
