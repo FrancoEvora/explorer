@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173726">
+  <title>Explorer</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 0,#345f47,#102017 50%,#08110c);font-family:system-ui,-apple-system,sans-serif;color:#fffaf0}.load{width:min(430px,90vw);padding:34px;border:1px solid rgba(255,255,255,.15);border-radius:30px;background:rgba(255,255,255,.08);backdrop-filter:blur(18px);box-shadow:0 30px 90px rgba(0,0,0,.28);text-align:center}.mark{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(145deg,#f0c27b,#2f6549);font-size:35px}.load h1{margin:0;font-size:2rem;letter-spacing:-.05em}.load p{color:rgba(255,255,255,.72);line-height:1.5}.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:22px}.bar::after{content:"";display:block;width:45%;height:100%;border-radius:inherit;background:#f0c27b;animation:move 1.2s infinite ease-in-out}@keyframes move{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}button{border:0;border-radius:16px;padding:12px 18px;font:inherit;font-weight:800;background:#fffaf0;color:#173726;cursor:pointer}
+  </style>
+</head>
+<body>
+  <main class="load" id="loader">
+    <div class="mark">⌁</div>
+    <h1>Explorer</h1>
+    <p id="status">Carregando sua central pessoal de trilhas e vida selvagem…</p>
+    <div class="bar" id="bar"></div>
+  </main>
+<script>
+(() => {
+  'use strict';
+  const BASE = 'https://raw.githubusercontent.com/FrancoEvora/explorer/main/bootstrap/';
+  const PARTS = ['part00.b64','part01.b64','part02.b64','part03.b64','part04.b64'];
+  const CACHE = 'explorer-assembled-v1';
+  const CACHE_KEY = '/__explorer_app_document__';
+  const status = document.getElementById('status');
+  const tell = (message) => { status.textContent = message; };
+  function base64Bytes(base64) { const clean = base64.replace(/\s/g, ''); const binary = atob(clean); const bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
+  async function gunzip(bytes) { if (!('DecompressionStream' in window)) throw new Error('Este navegador não suporta a descompressão necessária.'); const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')); return new Uint8Array(await new Response(stream).arrayBuffer()); }
+  function readString(bytes, start, length) { let end = start; const limit = start + length; while (end < limit && bytes[end] !== 0) end++; return new TextDecoder().decode(bytes.subarray(start, end)); }
+  function untar(bytes) { const files = new Map(); let offset = 0; while (offset + 512 <= bytes.length) { const name = readString(bytes, offset, 100).replace(/^\.\//, ''); if (!name) break; const sizeText = readString(bytes, offset + 124, 12).trim(); const size = parseInt(sizeText || '0', 8) || 0; const type = String.fromCharCode(bytes[offset + 156] || 48); const dataStart = offset + 512; if (type !== '5' && name) files.set(name, bytes.slice(dataStart, dataStart + size)); offset = dataStart + Math.ceil(size / 512) * 512; } return files; }
+  function text(files, name) { const value = files.get(name); if (!value) throw new Error('Arquivo ausente: ' + name); return new TextDecoder().decode(value); }
+  function dataSvg(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
+  function safeScript(js) { return js.replace(/<\/script/gi, '<\\/script'); }
+  function assemble(files) { let html = text(files, 'index.html'); const css = text(files, 'styles.css'); const cloud = text(files, 'cloud.js'); const app = text(files, 'app.js'); const logo = dataSvg(text(files, 'logo.svg')); const icon = dataSvg(text(files, 'icon.svg')); html = html.replace(/<link rel="stylesheet" href="styles\.css">\s*/i, '').replace(/<script src="cloud\.js" defer><\/script>\s*/i, '').replace(/<script src="app\.js" defer><\/script>\s*/i, '').replace(/(<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2\/dist\/umd\/supabase\.js") defer(><\/script>)/i, '$1$2').replace(/src="logo\.svg"/g, 'src="' + logo + '"').replace(/src="icon\.svg"/g, 'src="' + icon + '"').replace('</head>', '<style>' + css + '</style></head>').replace('</body>', '<script>' + safeScript(cloud) + '<\/script><script>' + safeScript(app) + '<\/script></body>'); return html; }
+  async function cacheDocument(html) { if (!('caches' in window)) return; const cache = await caches.open(CACHE); await cache.put(CACHE_KEY, new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })); }
+  async function cachedDocument() { if (!('caches' in window)) return ''; const response = await caches.match(CACHE_KEY); return response ? response.text() : ''; }
+  function launch(html) { document.open(); document.write(html); document.close(); }
+  async function onlineBuild() { tell('Baixando a versão segura do Explorer…'); const responses = await Promise.all(PARTS.map((part) => fetch(BASE + part + '?v=1', { cache: 'no-store' }))); if (responses.some((response) => !response.ok)) throw new Error('Não foi possível baixar todos os módulos.'); const base64 = (await Promise.all(responses.map((response) => response.text()))).join(''); tell('Preparando o aplicativo…'); const files = untar(await gunzip(base64Bytes(base64))); const html = assemble(files); await cacheDocument(html); launch(html); }
+  async function boot() { try { await onlineBuild(); } catch (error) { console.warn(error); const cached = await cachedDocument(); if (cached) { tell('Abrindo a última versão salva…'); launch(cached); return; } document.getElementById('bar').remove(); status.innerHTML = 'Não foi possível carregar o Explorer. Verifique a conexão e tente novamente.<br><br><button id="retry">Tentar novamente</button>'; document.getElementById('retry').onclick = () => location.reload(); } }
+  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  boot();
+})();
+</script>
+</body>
+</html>
