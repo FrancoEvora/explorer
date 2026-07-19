@@ -1,0 +1,37 @@
+name: Publicar Explorer
+
+on:
+  push:
+    paths:
+      - "bootstrap/part*.b64"
+      - ".github/workflows/unpack-explorer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Reconstruir e extrair código-fonte
+        shell: bash
+        run: |
+          cat bootstrap/part00.b64 bootstrap/part01.b64 bootstrap/part02.b64 bootstrap/part03.b64 bootstrap/part04.b64 > /tmp/explorer.b64
+          base64 --decode /tmp/explorer.b64 > /tmp/explorer.tar.gz
+          tar -xzf /tmp/explorer.tar.gz -C .
+          rm -rf bootstrap
+
+      - name: Publicar arquivos definitivos
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Publica Explorer v1.0 com Supabase"
+          git push
