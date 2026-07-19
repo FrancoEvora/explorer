@@ -4,44 +4,600 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#173726">
-  <title>Explorer</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Explorer">
+  <title>Explorer · v1.0</title>
   <link rel="manifest" href="manifest.json">
-  <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 0,#345f47,#102017 50%,#08110c);font-family:system-ui,-apple-system,sans-serif;color:#fffaf0}.load{width:min(430px,90vw);padding:34px;border:1px solid rgba(255,255,255,.15);border-radius:30px;background:rgba(255,255,255,.08);backdrop-filter:blur(18px);box-shadow:0 30px 90px rgba(0,0,0,.28);text-align:center}.mark{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(145deg,#f0c27b,#2f6549);font-size:35px}.load h1{margin:0;font-size:2rem;letter-spacing:-.05em}.load p{color:rgba(255,255,255,.72);line-height:1.5}.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:22px}.bar::after{content:"";display:block;width:45%;height:100%;border-radius:inherit;background:#f0c27b;animation:move 1.2s infinite ease-in-out}@keyframes move{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}button{border:0;border-radius:16px;padding:12px 18px;font:inherit;font-weight:800;background:#fffaf0;color:#173726;cursor:pointer}
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="load" id="loader">
-    <div class="mark">⌁</div>
-    <h1>Explorer</h1>
-    <p id="status">Carregando sua central pessoal de trilhas e vida selvagem…</p>
-    <div class="bar" id="bar"></div>
-  </main>
-<script>
-(() => {
-  'use strict';
-  const BASE = 'https://raw.githubusercontent.com/FrancoEvora/explorer/main/bootstrap/';
-  const PARTS = ['part00.b64','part01.b64','part02.b64','part03.b64','part04.b64'];
-  const CACHE = 'explorer-assembled-v1';
-  const CACHE_KEY = '/__explorer_app_document__';
-  const status = document.getElementById('status');
-  const tell = (message) => { status.textContent = message; };
-  function base64Bytes(base64) { const clean = base64.replace(/\s/g, ''); const binary = atob(clean); const bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
-  async function gunzip(bytes) { if (!('DecompressionStream' in window)) throw new Error('Este navegador não suporta a descompressão necessária.'); const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')); return new Uint8Array(await new Response(stream).arrayBuffer()); }
-  function readString(bytes, start, length) { let end = start; const limit = start + length; while (end < limit && bytes[end] !== 0) end++; return new TextDecoder().decode(bytes.subarray(start, end)); }
-  function untar(bytes) { const files = new Map(); let offset = 0; while (offset + 512 <= bytes.length) { const name = readString(bytes, offset, 100).replace(/^\.\//, ''); if (!name) break; const sizeText = readString(bytes, offset + 124, 12).trim(); const size = parseInt(sizeText || '0', 8) || 0; const type = String.fromCharCode(bytes[offset + 156] || 48); const dataStart = offset + 512; if (type !== '5' && name) files.set(name, bytes.slice(dataStart, dataStart + size)); offset = dataStart + Math.ceil(size / 512) * 512; } return files; }
-  function text(files, name) { const value = files.get(name); if (!value) throw new Error('Arquivo ausente: ' + name); return new TextDecoder().decode(value); }
-  function dataSvg(svg) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
-  function safeScript(js) { return js.replace(/<\/script/gi, '<\\/script'); }
-  function assemble(files) { let html = text(files, 'index.html'); const css = text(files, 'styles.css'); const cloud = text(files, 'cloud.js'); const app = text(files, 'app.js'); const logo = dataSvg(text(files, 'logo.svg')); const icon = dataSvg(text(files, 'icon.svg')); html = html.replace(/<link rel="stylesheet" href="styles\.css">\s*/i, '').replace(/<script src="cloud\.js" defer><\/script>\s*/i, '').replace(/<script src="app\.js" defer><\/script>\s*/i, '').replace(/(<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2\/dist\/umd\/supabase\.js") defer(><\/script>)/i, '$1$2').replace(/src="logo\.svg"/g, 'src="' + logo + '"').replace(/src="icon\.svg"/g, 'src="' + icon + '"').replace('</head>', '<style>' + css + '</style></head>').replace('</body>', '<script>' + safeScript(cloud) + '<\/script><script>' + safeScript(app) + '<\/script></body>'); return html; }
-  async function cacheDocument(html) { if (!('caches' in window)) return; const cache = await caches.open(CACHE); await cache.put(CACHE_KEY, new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })); }
-  async function cachedDocument() { if (!('caches' in window)) return ''; const response = await caches.match(CACHE_KEY); return response ? response.text() : ''; }
-  function launch(html) { document.open(); document.write(html); document.close(); }
-  async function onlineBuild() { tell('Baixando a versão segura do Explorer…'); const responses = await Promise.all(PARTS.map((part) => fetch(BASE + part + '?v=1', { cache: 'no-store' }))); if (responses.some((response) => !response.ok)) throw new Error('Não foi possível baixar todos os módulos.'); const base64 = (await Promise.all(responses.map((response) => response.text()))).join(''); tell('Preparando o aplicativo…'); const files = untar(await gunzip(base64Bytes(base64))); const html = assemble(files); await cacheDocument(html); launch(html); }
-  async function boot() { try { await onlineBuild(); } catch (error) { console.warn(error); const cached = await cachedDocument(); if (cached) { tell('Abrindo a última versão salva…'); launch(cached); return; } document.getElementById('bar').remove(); status.innerHTML = 'Não foi possível carregar o Explorer. Verifique a conexão e tente novamente.<br><br><button id="retry">Tentar novamente</button>'; document.getElementById('retry').onclick = () => location.reload(); } }
-  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-  boot();
-})();
-</script>
+  <section id="authGate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo-wrap"><img src="logo.svg" alt="Logo Explorer"></div>
+        <div>
+          <p class="eyebrow">diário pessoal de campo</p>
+          <h1>Explorer</h1>
+          <p class="auth-subtitle">Trilhas, vida selvagem, fotografia e segurança, sincronizadas em uma conta privada.</p>
+        </div>
+      </div>
+      <form id="authForm" class="form-stack auth-form">
+        <label>E-mail
+          <input id="authEmail" type="email" value="franco@evoraurbanismo.com.br" autocomplete="email" inputmode="email" required>
+        </label>
+        <label>Senha
+          <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required>
+        </label>
+        <div class="grid two">
+          <button id="btnSignIn" class="primary" type="submit">Entrar</button>
+          <button id="btnSignUp" class="secondary" type="button">Criar primeira conta</button>
+        </div>
+        <p id="authMessage" class="auth-message" data-tone="muted">Na primeira utilização, crie sua conta e confirme o e-mail.</p>
+      </form>
+      <div class="auth-security-note">
+        <strong>Banco definitivo</strong>
+        <span>Dados no PostgreSQL, mídias em armazenamento privado e acesso protegido por conta.</span>
+      </div>
+      <span class="pill version-pill auth-version">Explorer v1.0</span>
+    </div>
+  </section>
+
+  <div id="appShell" class="hidden">
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-mark-wrap">
+          <img src="logo.svg" alt="Logo Explorer" class="brand-logo">
+        </div>
+        <div class="brand-copy">
+          <p class="eyebrow">uso pessoal</p>
+          <div class="title-row">
+            <h1>Explorer</h1>
+            <span class="pill version-pill">v1.0</span>
+          </div>
+          <p class="header-subtitle">Trilhas, vida selvagem, fotografia e segurança em campo.</p>
+        </div>
+      </div>
+      <div class="status-stack">
+        <span id="cloudStatus" class="pill muted">conectando</span>
+        <span id="onlineStatus" class="pill">verificando</span>
+        <span id="gpsStatus" class="pill muted">GPS inativo</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="screen-campo" class="screen active">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">trilha atual</p>
+            <h2 id="activeTrailName">Nenhuma trilha iniciada</h2>
+            <p id="activeTrailMeta" class="muted-text">Inicie uma trilha para gravar rota, tempo, pontos e observações.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="btnStartTrail" class="primary" type="button">Iniciar trilha</button>
+            <button id="btnEndTrail" class="danger hidden" type="button">Finalizar</button>
+          </div>
+        </div>
+
+        <div class="grid two stats-grid">
+          <article class="card stat-card"><span>Distância</span><strong id="statDistance">0,00 km</strong></article>
+          <article class="card stat-card"><span>Tempo</span><strong id="statDuration">00:00</strong></article>
+          <article class="card stat-card"><span>Pontos GPS</span><strong id="statPoints">0</strong></article>
+          <article class="card stat-card"><span>Altitude</span><strong id="statAltitude">—</strong></article>
+        </div>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">registro rápido</p>
+              <h2>Avistamento de vida selvagem</h2>
+            </div>
+            <button id="btnUseLocationObs" class="ghost small" type="button">usar GPS atual</button>
+          </div>
+
+          <form id="observationForm" class="form-stack">
+            <div class="grid two">
+              <label>Tipo
+                <select id="obsType" required>
+                  <option value="Ave">Ave</option>
+                  <option value="Mamífero">Mamífero</option>
+                  <option value="Réptil">Réptil</option>
+                  <option value="Anfíbio">Anfíbio</option>
+                  <option value="Inseto">Inseto</option>
+                  <option value="Planta">Planta</option>
+                  <option value="Fungo">Fungo</option>
+                  <option value="Pegada/rastro">Pegada/rastro</option>
+                  <option value="Som/canto">Som/canto</option>
+                  <option value="Ninho/toca">Ninho/toca</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </label>
+              <label>Status da identificação
+                <select id="obsStatus">
+                  <option value="Não identificado">Não identificado</option>
+                  <option value="Identificação provável">Identificação provável</option>
+                  <option value="Confirmado por mim">Confirmado por mim</option>
+                  <option value="Confirmado posteriormente">Confirmado posteriormente</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Espécie ou descrição
+              <input id="obsSpecies" type="text" placeholder="Ex.: tucano, ave amarela, pegada na lama">
+            </label>
+
+            <div class="grid two">
+              <label>Comportamento
+                <input id="obsBehavior" type="text" placeholder="Ex.: vocalizando, voando, se alimentando">
+              </label>
+              <label>Ambiente
+                <input id="obsHabitat" type="text" placeholder="Ex.: borda de mata, riacho, clareira">
+              </label>
+            </div>
+
+            <label>Foto de campo
+              <input id="obsFieldPhoto" type="file" accept="image/*" capture="environment">
+            </label>
+
+            <label>Áudio ou anotação sonora
+              <input id="obsAudio" type="file" accept="audio/*" capture>
+            </label>
+
+            <label>Notas
+              <textarea id="obsNotes" rows="3" placeholder="Detalhes que você quer lembrar depois"></textarea>
+            </label>
+
+            <input id="obsLat" type="hidden">
+            <input id="obsLng" type="hidden">
+            <button class="primary" type="submit">Salvar avistamento</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">campo</p>
+              <h2>Marcar risco ou ponto útil</h2>
+            </div>
+            <button id="btnUseLocationRisk" class="ghost small" type="button">usar GPS atual</button>
+          </div>
+
+          <form id="riskForm" class="form-stack">
+            <div class="grid two">
+              <label>Tipo
+                <select id="riskType">
+                  <option value="Trecho escorregadio">Trecho escorregadio</option>
+                  <option value="Ponte ruim">Ponte ruim</option>
+                  <option value="Árvore caída">Árvore caída</option>
+                  <option value="Travessia perigosa">Travessia perigosa</option>
+                  <option value="Enxame">Enxame</option>
+                  <option value="Animal agressivo">Animal agressivo</option>
+                  <option value="Área alagada">Área alagada</option>
+                  <option value="Barranco/queda">Barranco/queda</option>
+                  <option value="Ponto sem sinal">Ponto sem sinal</option>
+                  <option value="Ponto de água">Ponto de água</option>
+                  <option value="Bom ponto de descanso">Bom ponto de descanso</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </label>
+              <label>Gravidade
+                <select id="riskSeverity">
+                  <option value="baixa">baixa</option>
+                  <option value="média">média</option>
+                  <option value="alta">alta</option>
+                </select>
+              </label>
+            </div>
+            <label>Descrição
+              <textarea id="riskNotes" rows="3" placeholder="Ex.: pedra lisa depois do riacho; cuidado na volta"></textarea>
+            </label>
+            <label>Imagem do risco / ponto útil
+              <input id="riskPhoto" type="file" accept="image/*" capture="environment">
+            </label>
+            <input id="riskLat" type="hidden">
+            <input id="riskLng" type="hidden">
+            <button class="secondary" type="submit">Salvar ponto no mapa pessoal</button>
+          </form>
+          <div class="inline-list-header">
+            <div>
+              <p class="eyebrow">campo</p>
+              <h3>Riscos e pontos úteis registrados</h3>
+            </div>
+          </div>
+          <div id="risksList" class="list empty-state">Nenhum risco ou ponto útil registrado ainda.</div>
+        </article>
+      </section>
+
+      <section id="screen-mapa" class="screen">
+        <article class="card map-card">
+          <div class="section-title map-title">
+            <div>
+              <p class="eyebrow">mapa pessoal</p>
+              <h2>Rota, observações e riscos</h2>
+              <p class="muted-text">Mostra sua trilha gravada, posição atual, avistamentos e pontos de atenção.</p>
+            </div>
+            <div class="map-actions toolbar-actions">
+              <button id="btnLocateOnMap" class="ghost small" type="button">minha posição</button>
+              <button id="btnFitMap" class="ghost small" type="button">enquadrar tudo</button>
+              <button id="btnOpenGoogleMaps" class="ghost small" type="button">abrir no Maps</button>
+              <button id="btnExportGpx" class="ghost small" type="button">GPX</button>
+            </div>
+          </div>
+          <div id="mapCanvas" class="map-canvas" role="application" aria-label="Mapa da trilha"></div>
+          <p id="mapFallback" class="muted-text map-fallback hidden">Mapa indisponível. Verifique a conexão para carregar a biblioteca do mapa; seus registros continuam salvos localmente.</p>
+        </article>
+      </section>
+
+      <section id="screen-observacoes" class="screen">
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">acervo naturalista</p>
+              <h2>Observações</h2>
+            </div>
+            <div class="toolbar-actions">
+              <input id="obsSearch" class="compact-input" type="search" placeholder="filtrar">
+              <button id="btnExportCsv" class="ghost small" type="button">CSV</button>
+            </div>
+          </div>
+          <div id="observationsList" class="list empty-state">Nenhum avistamento registrado ainda.</div>
+        </article>
+      </section>
+
+      <section id="screen-trilhas" class="screen">
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">memória de campo</p>
+              <h2>Trilhas</h2>
+            </div>
+            <button id="btnPrintTrail" class="ghost small" type="button">relatório</button>
+          </div>
+          <div id="trailsList" class="list empty-state">Nenhuma trilha concluída.</div>
+        </article>
+      </section>
+
+      <section id="screen-seguranca" class="screen">
+        <article class="sos-card">
+          <p class="eyebrow">emergência</p>
+          <h2>Modo SOS</h2>
+          <p>Use quando precisar sinalizar sua posição ou compartilhar coordenadas. O navegador precisa estar aberto para tocar som, piscar tela e tentar controlar a lanterna.</p>
+          <button id="btnActivateSOS" class="sos-button" type="button">Pressionar para SOS</button>
+          <p id="sirenStatus" class="siren-status" data-tone="idle">Toque em “Testar sirene” antes de ir para campo, com o volume do celular alto.</p>
+          <div class="grid two">
+            <button id="btnTestSiren" class="secondary" type="button">Testar sirene</button>
+            <button id="btnShareLocation" class="secondary" type="button">Compartilhar localização</button>
+            <button id="btnCopyLocation" class="secondary" type="button">Copiar coordenadas</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">planejamento</p>
+              <h2>Check-in de retorno</h2>
+            </div>
+            <span id="returnStatus" class="pill muted">não configurado</span>
+          </div>
+          <form id="safetyForm" class="form-stack">
+            <div class="grid two">
+              <label>Previsão de retorno
+                <input id="plannedReturn" type="datetime-local">
+              </label>
+              <label>Telefone de emergência local
+                <input id="emergencyPhone" type="tel" placeholder="Ex.: 193, 190 ou contato local">
+              </label>
+            </div>
+            <label>Contatos de confiança
+              <textarea id="trustedContacts" rows="3" placeholder="Nome e telefone. Ex.: Maria +55..."></textarea>
+            </label>
+            <label>Informações médicas essenciais
+              <textarea id="medicalInfo" rows="3" placeholder="Alergias, medicação, tipo sanguíneo, contato familiar"></textarea>
+            </label>
+            <button class="primary" type="submit">Salvar plano de segurança</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">mensagem pronta</p>
+          <h2>Texto de emergência</h2>
+          <textarea id="emergencyMessage" rows="8" readonly></textarea>
+        </article>
+      </section>
+
+      <section id="screen-acervo" class="screen">
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">fotografia</p>
+              <h2>Complementar com foto profissional</h2>
+              <p class="muted-text">A foto profissional fica vinculada à observação de campo, sem apagar a evidência original.</p>
+            </div>
+          </div>
+          <form id="portfolioForm" class="form-stack">
+            <label>Observação vinculada
+              <select id="portfolioObservation"></select>
+            </label>
+            <label>Foto profissional
+              <input id="portfolioPhoto" type="file" accept="image/*">
+            </label>
+            <div class="grid two">
+              <label>Câmera
+                <select id="cameraModel"></select>
+              </label>
+              <label>Outra câmera, se necessário
+                <input id="cameraOther" type="text" placeholder="Ex.: modelo específico">
+              </label>
+              <label>Lente
+                <select id="lensModel"></select>
+              </label>
+              <label>Outra lente, se necessário
+                <input id="lensOther" type="text" placeholder="Ex.: 150-600mm">
+              </label>
+              <label>Acessório de apoio
+                <select id="accessoryUsed"></select>
+              </label>
+              <label>Outro acessório, se necessário
+                <input id="accessoryOther" type="text" placeholder="Ex.: monopé, binóculo, gravador">
+              </label>
+              <label>Distância focal
+                <input id="focalLength" type="text" placeholder="Ex.: 400mm">
+              </label>
+              <label>Configurações
+                <input id="shotSettings" type="text" placeholder="Ex.: 1/1000s · f/5.6 · ISO 800">
+              </label>
+            </div>
+            <label>Nota posterior
+              <textarea id="portfolioNote" rows="3" placeholder="Identificação confirmada, contexto da foto, edição, observações"></textarea>
+            </label>
+            <button class="primary" type="submit">Adicionar ao registro</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">meu kit</p>
+              <h2>Lista de equipamentos</h2>
+              <p class="muted-text">Cadastre seus corpos de câmera, lentes e acessórios para selecionar rapidamente nos registros.</p>
+            </div>
+          </div>
+          <form id="equipmentForm" class="form-stack equipment-form">
+            <div class="grid two">
+              <label>Categoria
+                <select id="equipmentCategory">
+                  <option value="Câmera">Câmera</option>
+                  <option value="Lente">Lente</option>
+                  <option value="Acessório">Acessório</option>
+                </select>
+              </label>
+              <label>Nome do equipamento
+                <input id="equipmentName" type="text" placeholder="Ex.: Sony A7 IV, Canon R6, 100-500mm">
+              </label>
+            </div>
+            <button class="secondary" type="submit">Adicionar à lista</button>
+          </form>
+          <div id="equipmentList" class="equipment-list"></div>
+        </article>
+      </section>
+
+      <section id="screen-config" class="screen">
+        <article class="card cloud-account-card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">conta privada</p>
+              <h2>Explorer Cloud</h2>
+              <p class="muted-text">Sua base principal está no Supabase. O navegador mantém uma cópia local para uso em campo e sincroniza quando a internet volta.</p>
+            </div>
+            <span class="pill good">PostgreSQL + Storage</span>
+          </div>
+          <div class="account-row">
+            <div>
+              <span class="account-label">Usuário conectado</span>
+              <strong id="signedUserEmail">carregando…</strong>
+            </div>
+            <button id="btnSignOut" class="ghost" type="button">Sair da conta</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">portabilidade</p>
+              <h2>Backup e restauração</h2>
+            </div>
+          </div>
+          <p class="muted-text">A nuvem é a base principal. O arquivo JSON é uma cópia adicional para portabilidade e recuperação independente.</p>
+          <div class="grid two">
+            <button id="btnExport" class="secondary" type="button">Exportar dados JSON</button>
+            <label class="button-like secondary">Importar JSON
+              <input id="importJson" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+          <button id="btnClearAll" class="danger secondary-spacing" type="button">Apagar dados da nuvem e deste aparelho</button>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">instalação</p>
+          <h2>Usar como app</h2>
+          <p class="muted-text">No celular, abra esta página no navegador e use “Adicionar à tela inicial”. Depois disso, ela abre como aplicativo e funciona offline para os recursos locais.</p>
+        </article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <button class="nav-btn active" data-target="campo" type="button"><span>Campo</span></button>
+      <button class="nav-btn" data-target="mapa" type="button"><span>Mapa</span></button>
+      <button class="nav-btn" data-target="observacoes" type="button"><span>Obs.</span></button>
+      <button class="nav-btn" data-target="trilhas" type="button"><span>Trilhas</span></button>
+      <button class="nav-btn" data-target="seguranca" type="button"><span>SOS</span></button>
+      <button class="nav-btn" data-target="acervo" type="button"><span>Fotos</span></button>
+      <button class="nav-btn" data-target="config" type="button"><span>Backup</span></button>
+    </nav>
+  </div>
+
+  <div id="trailModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>Iniciar trilha</h2>
+      <form id="startTrailForm" class="form-stack">
+        <label>Nome da trilha
+          <input id="trailNameInput" type="text" placeholder="Ex.: Trilha da Cachoeira Alta" required>
+        </label>
+        <label>Local
+          <input id="trailPlaceInput" type="text" placeholder="Ex.: Serra do Japi, reserva, fazenda">
+        </label>
+        <label>Observação inicial
+          <textarea id="trailStartNotes" rows="3" placeholder="Clima, objetivo, equipamento, companhia"></textarea>
+        </label>
+        <div class="grid two">
+          <button class="primary" type="submit">Começar agora</button>
+          <button id="btnCancelTrail" class="ghost" type="button">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="sosOverlay" class="sos-overlay hidden" role="dialog" aria-modal="true">
+    <div class="sos-overlay-card">
+      <p class="eyebrow">SOS ativo</p>
+      <h2>Preciso de ajuda</h2>
+      <p id="sosCoordinates" class="coordinates">Localização ainda não disponível.</p>
+      <p id="sosMeta" class="muted-text"></p>
+      <div class="grid two">
+        <button id="btnSiren" class="primary" type="button">Sirene</button>
+        <button id="btnLight" class="primary" type="button">Luz</button>
+        <button id="btnShareSOS" class="secondary" type="button">Compartilhar</button>
+        <button id="btnCallEmergency" class="secondary" type="button">Ligar</button>
+      </div>
+      <button id="btnStopSOS" class="danger full-width" type="button">Encerrar SOS</button>
+    </div>
+  </div>
+
+  <div id="mediaModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card media-modal-card">
+      <button id="btnCloseMedia" class="close-btn" type="button" aria-label="Fechar">×</button>
+      <p class="eyebrow">mídia registrada</p>
+      <h2 id="mediaViewerTitle">Registro</h2>
+      <div id="mediaViewerBody" class="media-viewer-body"></div>
+      <p id="mediaViewerMeta" class="muted-text"></p>
+      <a id="mediaDownload" class="secondary full-width hidden" href="#" download>Abrir arquivo em nova aba</a>
+    </div>
+  </div>
+
+  <template id="observationTemplate">
+    <article class="list-item">
+      <div class="thumb"></div>
+      <div class="list-content">
+        <div class="list-title-row">
+          <strong class="item-title"></strong>
+          <span class="pill item-type"></span>
+        </div>
+        <p class="item-meta"></p>
+        <p class="item-notes"></p>
+        <div class="media-row"></div>
+        <div class="item-actions">
+          <button class="media-chip media-button detail-trigger" type="button">Ver detalhes</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+
+  <template id="riskTemplate">
+    <article class="list-item">
+      <div class="thumb"></div>
+      <div class="list-content">
+        <div class="list-title-row">
+          <strong class="item-title"></strong>
+          <span class="pill item-type"></span>
+        </div>
+        <p class="item-meta"></p>
+        <p class="item-notes"></p>
+        <div class="media-row"></div>
+        <div class="item-actions">
+          <button class="media-chip media-button detail-trigger" type="button">Ver detalhes</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <template id="trailTemplate">
+    <article class="list-item no-thumb">
+      <div class="list-content">
+        <div class="list-title-row">
+          <strong class="item-title"></strong>
+          <span class="pill item-distance"></span>
+        </div>
+        <p class="item-meta"></p>
+        <p class="item-notes"></p>
+        <div class="item-actions">
+          <button class="media-chip media-button trail-open-map" type="button">Ver no mapa</button>
+          <button class="media-chip media-button trail-open-play" type="button">Play da trilha</button>
+        </div>
+        <details>
+          <summary>Ver pontos e estatísticas</summary>
+          <pre class="trail-details"></pre>
+        </details>
+      </div>
+    </article>
+  </template>
+
+  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card detail-modal-card">
+      <button id="btnCloseDetail" class="close-btn" type="button" aria-label="Fechar">×</button>
+      <p id="detailEyebrow" class="eyebrow">detalhes</p>
+      <h2 id="detailTitle">Detalhes</h2>
+      <p id="detailMeta" class="muted-text"></p>
+      <div id="detailBody" class="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="trailPlayerModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card trail-player-card">
+      <button id="btnCloseTrailPlayer" class="close-btn" type="button" aria-label="Fechar">×</button>
+      <p class="eyebrow">relatório interativo</p>
+      <h2 id="trailPlayerTitle">Trilha no mapa</h2>
+      <p id="trailPlayerMeta" class="muted-text"></p>
+      <div class="trail-player-toolbar">
+        <button id="btnTrailPlayback" class="primary" type="button">Play</button>
+        <button id="btnTrailPlaybackReset" class="ghost" type="button">Reiniciar</button>
+        <button id="btnTrailPlayerMaps" class="ghost" type="button">Abrir no Maps</button>
+        <label class="speed-label">Velocidade
+          <select id="trailPlaybackSpeed">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+            <option value="8">8x</option>
+          </select>
+        </label>
+      </div>
+      <div id="trailPlayerMap" class="map-canvas mini-map" role="application" aria-label="Mapa de playback da trilha"></div>
+      <div class="grid two trail-related-grid">
+        <article class="sub-card">
+          <div class="section-title compact">
+            <div>
+              <p class="eyebrow">observações</p>
+              <h3>Observações registradas</h3>
+            </div>
+          </div>
+          <div id="trailPlayerObsList" class="mini-list empty-state">Nenhuma observação nesta trilha.</div>
+        </article>
+        <article class="sub-card">
+          <div class="section-title compact">
+            <div>
+              <p class="eyebrow">riscos</p>
+              <h3>Riscos e pontos úteis</h3>
+            </div>
+          </div>
+          <div id="trailPlayerRiskList" class="mini-list empty-state">Nenhum risco ou ponto útil nesta trilha.</div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <audio id="sirenAudio" preload="auto" loop playsinline></audio>
+  <audio id="unlockAudio" preload="auto" playsinline></audio>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+  <script src="cloud.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
