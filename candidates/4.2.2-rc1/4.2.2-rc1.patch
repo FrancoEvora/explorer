@@ -1,0 +1,68 @@
+--- explorer_baseline_for_patch/config.js	2026-07-19 22:22:58.000000000 +0000
++++ explorer_candidate_4_2_2/config.js	2026-07-23 13:15:47.724177024 +0000
+@@ -2,7 +2,7 @@
+   'use strict';
+   const SUPABASE_URL = 'https://qlatvknnzejjljbottxb.supabase.co';
+   const SUPABASE_KEY = 'sb_publishable_Mzk6IxB1ituBQp5nEl1npQ_XzxCpfVM';
+-  const APP_VERSION = '4.2.0';
++  const APP_VERSION = '4.2.2-rc.1';
+   const MEDIA_BUCKET = 'explorer-media';
+   const APP_URL = 'https://explorer-six-self.vercel.app';
+   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+--- explorer_baseline_for_patch/index.html	2026-07-19 22:23:23.000000000 +0000
++++ explorer_candidate_4_2_2/index.html	2026-07-23 13:15:47.728177024 +0000
+@@ -46,7 +46,7 @@
+       </form>
+       <button id="openPasswordReset" class="button text full" type="button">Esqueci minha senha</button>
+       <div id="authMessage" class="notice">Cadastre-se gratuitamente ou explore o conteúdo público.</div>
+-      <div class="auth-version">Explorer 4.2</div>
++      <div class="auth-version">Explorer 4.2.2 RC1</div>
+     </div>
+   </section>
+ 
+@@ -55,7 +55,7 @@
+       <div class="brand-lockup compact">
+         <img class="brand-symbol" src="logo.svg" alt="Explorer">
+         <div>
+-          <p class="eyebrow">EXPLORER 4.2</p>
++          <p class="eyebrow">EXPLORER 4.2.2 RC1</p>
+           <h1>Explore o mundo real</h1>
+         </div>
+       </div>
+@@ -499,6 +499,7 @@
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+   <script src="config.js"></script>
++  <script src="telemetry.js"></script>
+   <script src="core.js"></script>
+   <script src="map.js"></script>
+   <script src="social.js"></script>
+--- explorer_baseline_for_patch/trail.js	2026-07-19 22:22:58.000000000 +0000
++++ explorer_candidate_4_2_2/trail.js	2026-07-23 13:15:47.724177024 +0000
+@@ -135,8 +135,8 @@
+   }
+ 
+   function bindRelatedItems() {
+-    $('trailDetailMeta').querySelector('[data-trail-author]')?.addEventListener('click', () => X.social42?.openUserProfile(trail.user_id));
+-    $('trailDetailMeta').querySelector('[data-message-user]')?.addEventListener('click', () => X.social42?.startConversation(trail.user_id));
++    $('trailDetailMeta').querySelector('[data-trail-author]')?.addEventListener('click', () => { if (currentTrail?.user_id) X.social42?.openUserProfile(currentTrail.user_id); });
++    $('trailDetailMeta').querySelector('[data-message-user]')?.addEventListener('click', () => { if (currentTrail?.user_id) X.social42?.startConversation(currentTrail.user_id); });
+     $('trailDetailContent').querySelectorAll('[data-related-type]').forEach((button) => button.addEventListener('click', () => X.social?.openDetail(button.dataset.relatedType, button.dataset.relatedId)));
+     $('trailDetailContent').querySelectorAll('[data-marker-id]').forEach((button) => button.addEventListener('click', () => X.social42?.openMarkerDetail(button.dataset.markerId)));
+     $('trailDetailContent').querySelectorAll('[data-gallery-index]').forEach((button) => button.addEventListener('click', () => {
+--- explorer_baseline_for_patch/social42.js	2026-07-19 22:22:58.000000000 +0000
++++ explorer_candidate_4_2_2/social42.js	2026-07-23 13:15:47.728177024 +0000
+@@ -8,8 +8,8 @@
+   let notificationSubscription = null;
+ 
+   async function avatarUrl(profile) {
+-    if (!profile?.avatar_path) return 'logo.svg';
+-    return await X.signedUrl(profile.avatar_path, 3600) || 'logo.svg';
++    if (!profile?.avatar_path) return 'icon-192.png';
++    return await X.signedUrl(profile.avatar_path, 3600) || 'icon-192.png';
+   }
+
+--- /dev/null	2026-07-23 12:43:20.564126067 +0000
++++ explorer_candidate_4_2_2/telemetry.js	2026-07-23 13:15:47.728177024 +0000
+@@ -0,0 +1,92 @@
++See `telemetry.js` in this candidate directory for the full added file.
