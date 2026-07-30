@@ -1,0 +1,127 @@
+--- a/config.js
++++ b/config.js
+@@ -2,7 +2,7 @@
+   'use strict';
+   const SUPABASE_URL = 'https://qlatvknnzejjljbottxb.supabase.co';
+   const SUPABASE_KEY = 'sb_publishable_Mzk6IxB1ituBQp5nEl1npQ_XzxCpfVM';
+-  const APP_VERSION = '4.2.0';
++  const APP_VERSION = '4.2.2-rc.1';
+   const MEDIA_BUCKET = 'explorer-media';
+   const APP_URL = 'https://explorer-six-self.vercel.app';
+   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+--- a/core.js
++++ b/core.js
+@@ -47,8 +47,26 @@
+     node.className = `notice ${tone}`.trim();
+   }
+ 
+-  function openModal(id) { $(id)?.classList.remove('hidden'); }
+-  function closeModal(id) { $(id)?.classList.add('hidden'); }
++  let lastFocusedElement = null;
++  function openModal(id) {
++    const modal = $(id);
++    if (!modal) return;
++    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
++    modal.classList.remove('hidden');
++    modal.setAttribute('aria-hidden', 'false');
++    requestAnimationFrame(() => {
++      const focusTarget = modal.querySelector('[data-close], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
++      focusTarget?.focus({ preventScroll:true });
++    });
++  }
++  function closeModal(id) {
++    const modal = $(id);
++    if (!modal) return;
++    modal.classList.add('hidden');
++    modal.setAttribute('aria-hidden', 'true');
++    if (lastFocusedElement?.isConnected) lastFocusedElement.focus({ preventScroll:true });
++    lastFocusedElement = null;
++  }
+   X.openModal = openModal;
+   X.closeModal = closeModal;
+ 
+@@ -671,6 +689,11 @@
+       if (item.dataset.activityType === 'trail') X.trails?.openDetail(item.dataset.activityId);
+       else X.social?.openDetail(item.dataset.activityType, item.dataset.activityId);
+     });
++    document.addEventListener('keydown', (event) => {
++      if (event.key !== 'Escape') return;
++      const modal = [...document.querySelectorAll('.modal:not(.hidden)')].at(-1);
++      if (modal) closeModal(modal.id);
++    });
+     window.addEventListener('online', () => { $('cloudStatus').textContent = 'online'; flushTrailPoints(); }); window.addEventListener('offline', () => $('cloudStatus').textContent = 'offline');
+     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.activeTrail) requestWakeLock(); });
+   }
+--- a/trail.js
++++ b/trail.js
+@@ -135,8 +135,10 @@
+   }
+ 
+   function bindRelatedItems() {
+-    $('trailDetailMeta').querySelector('[data-trail-author]')?.addEventListener('click', () => X.social42?.openUserProfile(trail.user_id));
+-    $('trailDetailMeta').querySelector('[data-message-user]')?.addEventListener('click', () => X.social42?.startConversation(trail.user_id));
++    const authorButton = $('trailDetailMeta').querySelector('[data-trail-author]');
++    const messageButton = $('trailDetailMeta').querySelector('[data-message-user]');
++    authorButton?.addEventListener('click', () => X.social42?.openUserProfile(authorButton.dataset.trailAuthor));
++    messageButton?.addEventListener('click', () => X.social42?.startConversation(messageButton.dataset.messageUser));
+     $('trailDetailContent').querySelectorAll('[data-related-type]').forEach((button) => button.addEventListener('click', () => X.social?.openDetail(button.dataset.relatedType, button.dataset.relatedId)));
+     $('trailDetailContent').querySelectorAll('[data-marker-id]').forEach((button) => button.addEventListener('click', () => X.social42?.openMarkerDetail(button.dataset.markerId)));
+     $('trailDetailContent').querySelectorAll('[data-gallery-index]').forEach((button) => button.addEventListener('click', () => {
+--- a/styles.css
++++ b/styles.css
+@@ -134,3 +134,16 @@
+ .chat-card{height:min(82vh,760px);display:grid;grid-template-rows:auto minmax(0,1fr) auto}.chat-heading{padding-right:45px}.chat-messages{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px 2px}.chat-message{max-width:82%;padding:10px 12px;border-radius:17px;background:#ffffff0c;border:1px solid #ffffff12}.chat-message.mine{align-self:flex-end;background:#1595ff26;border-color:#1595ff45}.chat-message small{display:block;color:var(--muted);margin-top:4px;font-size:.68rem}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.chat-form textarea{border:1px solid #ffffff18;border-radius:15px;background:#061a25;color:#fff;padding:11px 12px;resize:none}.notification-unread{border-color:#c7ff1950;background:#c7ff190c}.marker-detail-photo{width:100%;max-height:360px;object-fit:cover;border-radius:20px;margin:10px 0}.entity-author-button{border:0;background:transparent;color:#c7ff19;padding:0;font-weight:850;text-align:left}.entity-social-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+ .trail-related-item{cursor:pointer}.trail-related-item:hover,.trail-related-item:focus-visible{border-color:#c7ff1950;background:#c7ff190b}
+ @media(max-width:720px){.header-actions{gap:5px}.header-actions .status-pill{display:none}.icon-button{width:39px;height:39px}.home-safety-card{align-items:flex-start}.home-sos-button{width:72px;height:72px;min-width:72px}.trail-guide-panel{grid-template-columns:auto minmax(0,1fr) auto!important}.trail-guide-close{order:3}.chat-card{height:88vh}.user-profile-hero{align-items:flex-start}.user-profile-avatar{width:78px;height:78px}}
++
++
++/* Explorer 4.2.2 RC1 — interaction and accessibility hardening */
++:where(button,a,input,select,textarea,[tabindex]):focus-visible{
++  outline:3px solid var(--lime);
++  outline-offset:3px;
++}
++.modal[aria-hidden="true"]{display:none!important}
++@media (prefers-reduced-motion: reduce){
++  .button,.nav-button,.feed-card,.social-row-button,.trail-related-item,.trail-guide-arrow{
++    transition-duration:.01ms!important;
++  }
++}
+--- a/index.html
++++ b/index.html
+@@ -7,7 +7,9 @@
+   <meta name="apple-mobile-web-app-capable" content="yes">
+   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+   <meta name="apple-mobile-web-app-title" content="Explorer">
+-  <title>Explorer 4.2</title>
++  <meta name="application-name" content="Explorer">
++  <meta name="explorer-build" content="4.2.2-rc.1">
++  <title>Explorer 4.2.2 RC1</title>
+   <link rel="manifest" href="manifest.json">
+   <link rel="icon" href="icon-192.png">
+   <link rel="apple-touch-icon" href="icon-192.png">
+@@ -46,7 +48,7 @@
+       </form>
+       <button id="openPasswordReset" class="button text full" type="button">Esqueci minha senha</button>
+       <div id="authMessage" class="notice">Cadastre-se gratuitamente ou explore o conteúdo público.</div>
+-      <div class="auth-version">Explorer 4.2</div>
++      <div class="auth-version">Explorer 4.2.2 RC1</div>
+     </div>
+   </section>
+ 
+@@ -55,7 +57,7 @@
+       <div class="brand-lockup compact">
+         <img class="brand-symbol" src="logo.svg" alt="Explorer">
+         <div>
+-          <p class="eyebrow">EXPLORER 4.2</p>
++          <p class="eyebrow">EXPLORER 4.2.2 RC1</p>
+           <h1>Explore o mundo real</h1>
+         </div>
+       </div>
+--- a/manifest.json
++++ b/manifest.json
+@@ -1,4 +1,5 @@
+ {
++  "id":"/",
+   "name":"Explorer — Trilhas e Vida Selvagem",
+   "short_name":"Explorer",
+   "description":"Rede social de aventura, trilhas, fotografia, vida selvagem e segurança em campo.",
