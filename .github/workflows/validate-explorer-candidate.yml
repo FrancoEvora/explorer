@@ -1,0 +1,25 @@
+name: Validate Explorer Candidate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate isolated preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://qlatvknnzejjljbottxb.supabase.co/functions/v1/explorer-v422-rc1-preview-7f3a/health"
+          RESPONSE="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 "$URL")"
+          echo "$RESPONSE"
+          echo "$RESPONSE" | jq -e '.ok == true'
+          echo "$RESPONSE" | jq -e '.version == "4.2.2-rc.1"'
+          echo "$RESPONSE" | jq -e '.contentType == "text/html; charset=utf-8"'
