@@ -1,0 +1,11 @@
+--- a/styles.css
++++ b/styles.css
+@@
++/* Explorer 4.2.2 RC1 — mobile overflow containment */
++.app-main,.screen,.panel,.feed-list,.feed-card,.feed-body,.feed-head,.feed-actions,.feed-tabs,.search-field{min-width:0}
++.feed-tabs{flex-wrap:wrap}
++.feed-tab{min-width:0}
++@media(max-width:720px){
++  .feed-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
++  .feed-tab{width:100%;white-space:normal}
++}
