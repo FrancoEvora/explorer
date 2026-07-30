@@ -2,6 +2,7 @@
 
 - [x] Sintaxe JavaScript em todos os módulos.
 - [x] Integridade do HTML e IDs únicos.
+- [x] Largura móvel validada em 390 px, sem overflow horizontal.
 - [x] Fluxo visitante abre sem autenticação.
 - [x] Detalhe de trilha abre e carrega rota pública.
 - [x] Ação Ver autor não gera `ReferenceError`.
