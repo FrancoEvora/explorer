@@ -2,7 +2,7 @@
 
 Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 
-## [4.2.3] - 2026-08-06 — candidata para publicação conjunta
+## [4.2.3] - 2026-08-06 — publicada
 
 ### Acessibilidade e experiência
 
@@ -20,28 +20,29 @@ Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 
 ### Desempenho e banco
 
-- Índices candidatos cobrem chaves estrangeiras críticas de mensagens, notificações, participantes, telemetria e confirmações de risco.
+- Índices cobrem chaves estrangeiras críticas de mensagens, notificações, participantes, telemetria e confirmações de risco.
 - Migrações são idempotentes, não alteram linhas e possuem rollback explícito.
 
-### Validação
+### Validação e publicação
 
-- A candidata incorpora integralmente as correções aprovadas da 4.2.2.
-- Publicação conjunta condicionada à aprovação de todos os gates de prévia, segurança, integridade e produção.
+- Incorpora integralmente as correções aprovadas da 4.2.2.
+- Gates de release, segurança, integridade, entrega e rollback aprovados.
+- Publicada no domínio oficial em 6 de agosto de 2026.
 
-## [4.2.2] - 2026-08-03 — candidata retida
+## [4.2.2] - 2026-08-03 — incorporada à 4.2.3
 
 ### Corrigido
 
 - Fluxos **Ver autor** e **Mensagem** na central de trilha, eliminando referência a variável fora do escopo.
 - Ação de mensagem não é mais exibida para a própria conta.
-- Avatar padrão das superfícies sociais deixa de depender de rota estática potencialmente inexistente.
+- Avatar padrão das superfícies sociais deixa de depender de uma rota estática potencialmente inexistente.
 
 ### Segurança
 
-- Migração candidata revoga execução anônima de RPCs sociais `SECURITY DEFINER`.
+- Migração revoga execução anônima de RPCs sociais `SECURITY DEFINER`.
 - Funções exclusivas de gatilho deixam de ser executáveis diretamente por usuários autenticados.
 - Permissões necessárias para conversas e políticas RLS são preservadas para `authenticated` e `service_role`.
 
 ### Validação
 
-- Candidata aprovada nos gates locais e SQL, mantida fora da produção até a próxima versão aprovada.
+- Candidata aprovada nos gates locais e SQL e posteriormente publicada como parte da versão 4.2.3.
