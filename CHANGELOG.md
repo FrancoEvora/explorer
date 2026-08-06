@@ -8,8 +8,9 @@ Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 
 - Modais passam a controlar e restaurar foco, limitar a navegação por `Tab` e fechar com `Escape`.
 - Diálogos recebem `aria-labelledby` e estado `aria-hidden` coerente.
-- Estados de foco ficam visíveis para navegação por teclado e tecnologias assistivas.
-- Movimentos e animações respeitam `prefers-reduced-motion`.
+- Mensagens de autenticação passam a usar região viva para tecnologias assistivas.
+- Estados de foco ficam visíveis e movimentos respeitam `prefers-reduced-motion`.
+- O SOS passa a ser fechado pelo gerenciador de modal, preservando o estado ARIA.
 
 ### iPhone e Safari
 
@@ -17,17 +18,29 @@ Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 - Modais e conversas usam viewport dinâmica (`dvh`) e áreas seguras do iPhone.
 - Controles essenciais mantêm área mínima de toque de 44 px.
 - Bloqueio de rolagem e overflow horizontal tornam-se previsíveis durante diálogos.
+- Favicon, ícone de tela inicial e avatares padrão deixam de depender de arquivos estáticos externos.
+
+### Social
+
+- Incorpora as correções da 4.2.2 para **Ver autor** e **Mensagem**.
+- A ação de mensagem não aparece para a própria conta.
+- Perfis sem foto recebem avatar incorporado e consistente em todas as superfícies.
 
 ### Desempenho e banco
 
-- Índices cobrem chaves estrangeiras críticas de mensagens, notificações, participantes, telemetria e confirmações de risco.
+- Índices cobrem chaves estrangeiras críticas de mensagens, notificações, participantes, telemetria, confirmações de risco e alvos de itens salvos.
 - Migrações são idempotentes, não alteram linhas e possuem rollback explícito.
+- RPCs sociais privilegiadas permanecem bloqueadas para `anon`.
 
-### Validação e publicação
+### Publicação e integridade
 
-- Incorpora integralmente as correções aprovadas da 4.2.2.
-- Gates de release, segurança, integridade, entrega e rollback aprovados.
-- Publicada no domínio oficial em 6 de agosto de 2026.
+- O HTML final foi congelado como build imutável `4.2.3-r1`.
+- Artefato: **24 blocos**, **192.254 bytes**.
+- SHA-256: `3a8e540625e2d35453a09807ec03c65f29232b991eaa14572c832bdc3e085a85`.
+- O servidor oficial valida sequência, quantidade e hash antes de entregar a página.
+- Um seletor coletivo colapsado foi detectado pelo gate pós-build, corrigido e incluído como teste de regressão permanente antes da conclusão da release.
+- Deployment oficial confirmado como `READY`, com `Content-Type: text/html; charset=utf-8` e nenhum erro de runtime na primeira janela pós-publicação.
+- Endpoints temporários de candidata e prévia foram arquivados com autenticação obrigatória.
 
 ## [4.2.2] - 2026-08-03 — incorporada à 4.2.3
 
