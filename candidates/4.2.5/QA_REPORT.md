@@ -48,11 +48,13 @@ A telemetria herdada da 4.2.4 limita a coleta a 12 eventos por sessão, deduplic
 
 A política de inserção de `client_error_events` aceita usuário anônimo somente com `user_id` nulo e usuário autenticado somente quando `user_id` corresponde ao `auth.uid()` atual.
 
-## 6. Gate bloqueador
+## 6. Gates bloqueadores
 
 O GitHub Actions está recusando os workflows candidatos com `startup_failure` antes da criação de jobs. O último run inspecionado tinha zero jobs. A falha persistiu após simplificação do workflow e trigger explícito por push na branch candidata.
 
-Enquanto esse gate formal não executar e ficar verde, a política profissional de release impede aplicar a migração e promover `explorer-v42` para 4.2.5.
+Além disso, as tentativas de atualizar metadados do PR 4.2.4 e de abrir o PR da 4.2.5 foram rejeitadas pelo GitHub com a exigência de haver pelo menos um endereço de e-mail verificado na conta.
+
+Enquanto esses gates formais não estiverem resolvidos, a política profissional de release impede aplicar a migração e promover `explorer-v42` para 4.2.5.
 
 ## 7. Rollback
 
@@ -64,4 +66,4 @@ Enquanto esse gate formal não executar e ficar verde, a política profissional 
 
 **BLOQUEADA. NÃO PUBLICAR.**
 
-As candidatas 4.2.4 e 4.2.5 permanecem versionadas e tecnicamente preparadas para nova rodada, mas a promoção está corretamente interrompida até que o ambiente GitHub Actions execute os quality gates em vez de falhar na inicialização.
+As candidatas 4.2.4 e 4.2.5 permanecem versionadas e tecnicamente preparadas para nova rodada, mas a promoção está corretamente interrompida até que o ambiente GitHub execute os quality gates e permita a governança normal de pull requests.
