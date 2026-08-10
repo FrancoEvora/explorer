@@ -13,26 +13,33 @@
 (async () => {
   const status = document.getElementById('status');
   const baseUrl = 'https://explorer-six-self.vercel.app/?preview-base=4.2.3';
-  const early = `<script>(()=>{const b=window.__explorerEarlyErrors=window.__explorerEarlyErrors||[];const p=(k,v)=>{if(window.__explorerTelemetryReady||b.length>=8)return;b.push({kind:k,value:v,at:Date.now()})};window.addEventListener('error',e=>{if(e.target&&e.target!==window)return;p('error',{message:e.message||'Erro de inicialização',filename:e.filename||'',line:e.lineno||null,column:e.colno||null})});window.addEventListener('unhandledrejection',e=>p('unhandledrejection',{message:e.reason instanceof Error?e.reason.message:String(e.reason||'Promise rejeitada')}))})();<\/script>`;
-  const telemetry = `<script>(()=>{'use strict';const X=window.Explorer;if(!X?.supabase||window.__explorerTelemetryInstalled)return;window.__explorerTelemetryInstalled=true;window.__explorerTelemetryReady=true;const db=X.supabase,S=X.state||{},K='explorer-telemetry-session-v1',MAX=12,seen=new Set();let sent=0;const uuid=()=>{try{return crypto.randomUUID()}catch{return 'session-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12)}};const sessionId=(()=>{try{const e=sessionStorage.getItem(K);if(e)return e;const v=uuid();sessionStorage.setItem(K,v);return v}catch{return uuid()}})();const redact=(v='',m=1800)=>String(v).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi,'[email]').replace(/eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}/g,'[token]').replace(/\\bBearer\\s+[A-Za-z0-9._~+\\/-]+=*/gi,'Bearer [token]').replace(/\\bsb_[A-Za-z0-9_-]{10,}/g,'[key]').replace(/([?&][^=\\s]+)=([^&\\s#]+)/g,'$1=[redacted]').slice(0,m);const route=()=>document.querySelector('.screen.active')?.id?.replace('screen-','')||location.pathname||'/';async function userId(){if(S.user?.id)return S.user.id;try{const{data}=await db.auth.getSession();return data?.session?.user?.id||null}catch{return null}}function connection(){const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;return c?{effective_type:c.effectiveType||null,save_data:Boolean(c.saveData),downlink:Number.isFinite(c.downlink)?c.downlink:null}:null}async function capture(error,metadata={},severity='error'){if(sent>=MAX)return;const message=redact(error?.message||error||'Erro desconhecido');if(!message||message.includes('Explorer telemetry unavailable'))return;const stack=redact(error?.stack||'',3500),source=redact(metadata.source||'client',80),signature=[source,message,stack.split('\\n')[0],route()].join('|');if(seen.has(signature))return;seen.add(signature);sent+=1;try{const payload={user_id:await userId(),session_id:sessionId,app_version:X.config?.APP_VERSION||'4.2.4',severity,message,stack:stack||null,route:route().slice(0,120),user_agent:navigator.userAgent.slice(0,512),metadata:{source,online:navigator.onLine,viewport:innerWidth+'x'+innerHeight,dpr:devicePixelRatio||1,visibility:document.visibilityState,guest:Boolean(S.guestMode),active_trail:Boolean(S.activeTrail),connection:connection(),filename:metadata.filename?redact(String(metadata.filename).split('/').pop(),160):null,line:Number.isFinite(metadata.line)?metadata.line:null,column:Number.isFinite(metadata.column)?metadata.column:null,resource:metadata.resource?redact(metadata.resource,240):null}};const{error:insertError}=await db.from('client_error_events').insert(payload);if(insertError)console.debug('Explorer telemetry unavailable')}catch{console.debug('Explorer telemetry unavailable')}}window.addEventListener('error',e=>{if(e.target&&e.target!==window){const t=e.target,r=t?.src||t?.href||t?.currentSrc||'';capture(new Error('Falha ao carregar recurso'),{source:'resource.error',resource:r},'warning');return}capture(e.error||new Error(e.message||'Erro de JavaScript'),{source:'window.error',filename:e.filename||null,line:e.lineno||null,column:e.colno||null})},true);window.addEventListener('unhandledrejection',e=>capture(e.reason instanceof Error?e.reason:new Error(String(e.reason||'Promise rejeitada')),{source:'unhandledrejection'}));const queued=Array.isArray(window.__explorerEarlyErrors)?window.__explorerEarlyErrors.splice(0):[];for(const item of queued){const v=item?.value||{};capture(new Error(v.message||'Erro de inicialização'),{source:'early.'+(item?.kind||'error'),filename:v.filename||null,line:v.line||null,column:v.column||null})}X.telemetry=Object.freeze({capture,sessionId,maxEventsPerSession:MAX})})();<\/script>`;
+  const earlyTag = '<script src="/candidates/4.2.4/early-errors.js"><' + '/script>';
+  const telemetryTag = '<script src="/candidates/4.2.4/telemetry.js"><' + '/script>';
   try {
-    const response = await fetch(baseUrl, { cache: 'no-store' });
+    const response = await fetch(baseUrl, { cache: 'no-store', mode: 'cors' });
     if (!response.ok) throw new Error('Base HTTP ' + response.status);
     let html = await response.text();
-    if (!html.includes('<title>Explorer 4.2.3</title>') || !html.includes("const APP_VERSION = '4.2.3';")) throw new Error('A base de produção não é a 4.2.3 esperada.');
+    if (!html.includes('<title>Explorer 4.2.3</title>') || !html.includes("const APP_VERSION = '4.2.3';")) {
+      throw new Error('A base de produção não é a 4.2.3 esperada.');
+    }
     html = html
       .replace('<title>Explorer 4.2.3</title>', '<title>Explorer 4.2.4</title>')
       .replace('meta name="explorer-build" content="4.2.3"', 'meta name="explorer-build" content="4.2.4-rc1"')
       .replace('<div class="auth-version">Explorer 4.2.3</div>', '<div class="auth-version">Explorer 4.2.4</div>')
       .replace('<p class="eyebrow">EXPLORER 4.2.3</p>', '<p class="eyebrow">EXPLORER 4.2.4</p>')
       .replace("const APP_VERSION = '4.2.3';", "const APP_VERSION = '4.2.4';")
-      .replace('<head>', '<head>' + early)
-      .replace('</body>', telemetry + '</body>');
-    if (!html.includes('__explorerTelemetryInstalled') || !html.includes('<title>Explorer 4.2.4</title>')) throw new Error('Patch de observabilidade não aplicado.');
-    document.open(); document.write(html); document.close();
+      .replace('<head>', '<head>' + earlyTag)
+      .replace('</body>', telemetryTag + '</body>');
+    if (!html.includes('<title>Explorer 4.2.4</title>') || !html.includes('telemetry.js')) {
+      throw new Error('Patch da candidata não aplicado.');
+    }
+    document.open();
+    document.write(html);
+    document.close();
   } catch (error) {
     status.innerHTML = '<strong>Prévia bloqueada</strong><p class="error"></p>';
     status.querySelector('.error').textContent = error.message;
+    document.title = 'Explorer 4.2.4 RC Preview — bloqueada';
   }
 })();
 </script>
