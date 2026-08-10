@@ -12,15 +12,15 @@
 <script>
 (async () => {
   const status = document.getElementById('status');
-  const baseUrl = 'https://explorer-six-self.vercel.app/?preview-base=4.2.3';
+  const baseUrl = '/candidates/4.2.4/base-4.2.3.html';
   const earlyTag = '<script src="/candidates/4.2.4/early-errors.js"><' + '/script>';
   const telemetryTag = '<script src="/candidates/4.2.4/telemetry.js"><' + '/script>';
   try {
-    const response = await fetch(baseUrl, { cache: 'no-store', mode: 'cors' });
-    if (!response.ok) throw new Error('Base HTTP ' + response.status);
+    const response = await fetch(baseUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Base local HTTP ' + response.status);
     let html = await response.text();
     if (!html.includes('<title>Explorer 4.2.3</title>') || !html.includes("const APP_VERSION = '4.2.3';")) {
-      throw new Error('A base de produção não é a 4.2.3 esperada.');
+      throw new Error('O artefato local não é a 4.2.3 esperada.');
     }
     html = html
       .replace('<title>Explorer 4.2.3</title>', '<title>Explorer 4.2.4</title>')
