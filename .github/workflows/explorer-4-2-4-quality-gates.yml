@@ -17,12 +17,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "24"
+          package-manager-cache: false
 
       - name: Static syntax gate
         run: |
@@ -33,7 +34,19 @@ jobs:
         run: |
           npm init -y >/dev/null 2>&1
           npm install --save-dev --ignore-scripts @playwright/test@1.59.1
+          npm audit --audit-level=high
           npx playwright install --with-deps webkit
+
+      - name: Freeze verified production base for preview
+        run: |
+          curl -fsS -D /tmp/production-headers.txt https://explorer-six-self.vercel.app/ -o candidates/4.2.4/base-4.2.3.html
+          grep -qi '^content-type: text/html; charset=utf-8' /tmp/production-headers.txt
+          grep -q '<title>Explorer 4.2.3</title>' candidates/4.2.4/base-4.2.3.html
+          grep -q "const APP_VERSION = '4.2.3';" candidates/4.2.4/base-4.2.3.html
+          grep -q 'activeStandardModal' candidates/4.2.4/base-4.2.3.html
+          grep -q 'canMessageAuthor' candidates/4.2.4/base-4.2.3.html
+          test "$(wc -c < candidates/4.2.4/base-4.2.3.html)" -eq 192254
+          test "$(sha256sum candidates/4.2.4/base-4.2.3.html | cut -d' ' -f1)" = "3a8e540625e2d35453a09807ec03c65f29232b991eaa14572c832bdc3e085a85"
 
       - name: Start isolated preview server
         run: |
@@ -47,15 +60,6 @@ jobs:
 
       - name: Run WebKit iPhone gates
         run: npx playwright test candidates/4.2.4/e2e.spec.js --reporter=line
-
-      - name: Production delivery gate
-        run: |
-          curl -fsS -D /tmp/headers.txt https://explorer-six-self.vercel.app/ -o /tmp/explorer-production.html
-          grep -qi '^content-type: text/html; charset=utf-8' /tmp/headers.txt
-          grep -q '<title>Explorer 4.2.3</title>' /tmp/explorer-production.html
-          grep -q "const APP_VERSION = '4.2.3';" /tmp/explorer-production.html
-          grep -q 'activeStandardModal' /tmp/explorer-production.html
-          grep -q 'canMessageAuthor' /tmp/explorer-production.html
 
       - name: Privacy source gate
         run: |
