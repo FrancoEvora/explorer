@@ -1,6 +1,12 @@
 name: Explorer 4.2.4 Quality Gates
 
 on:
+  push:
+    branches:
+      - candidate/v4.2.4
+    paths:
+      - "candidates/4.2.4/**"
+      - ".github/workflows/explorer-4-2-4-quality-gates.yml"
   pull_request:
     branches:
       - main
