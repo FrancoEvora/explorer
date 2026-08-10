@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Explorer 4.2.5 RC Preview</title>
+  <style>body{margin:0;background:#06151f;color:#f6fbff;font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px}.card{max-width:560px;background:#0b2a3a;border:1px solid #ffffff1a;border-radius:24px;padding:24px}.error{color:#ffb3c0}</style>
+</head>
+<body>
+  <div class="card" id="status"><strong>Explorer 4.2.5 RC</strong><p>Preparando prévia isolada das candidatas 4.2.4 + 4.2.5…</p></div>
+<script>
+(async () => {
+  const status = document.getElementById('status');
+  const baseUrl = '/candidates/4.2.4/base-4.2.3.html';
+  const earlyTag = '<script src="/candidates/4.2.4/early-errors.js"><' + '/script>';
+  const telemetryTag = '<script src="/candidates/4.2.4/telemetry.js"><' + '/script>';
+  try {
+    const response = await fetch(baseUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Base local HTTP ' + response.status);
+    let html = await response.text();
+    if (!html.includes('<title>Explorer 4.2.3</title>') || !html.includes("const APP_VERSION = '4.2.3';")) throw new Error('O artefato local não é a 4.2.3 esperada.');
+    html = html
+      .replace('<title>Explorer 4.2.3</title>', '<title>Explorer 4.2.5</title>')
+      .replace('meta name="explorer-build" content="4.2.3"', 'meta name="explorer-build" content="4.2.5-rc1"')
+      .replace('<div class="auth-version">Explorer 4.2.3</div>', '<div class="auth-version">Explorer 4.2.5</div>')
+      .replace('<p class="eyebrow">EXPLORER 4.2.3</p>', '<p class="eyebrow">EXPLORER 4.2.5</p>')
+      .replace("const APP_VERSION = '4.2.3';", "const APP_VERSION = '4.2.5';")
+      .replace('<head>', '<head>' + earlyTag)
+      .replace('</body>', telemetryTag + '</body>');
+    if (!html.includes('<title>Explorer 4.2.5</title>') || !html.includes('telemetry.js')) throw new Error('Patch combinado não aplicado.');
+    document.open(); document.write(html); document.close();
+  } catch (error) {
+    status.innerHTML = '<strong>Prévia bloqueada</strong><p class="error"></p>';
+    status.querySelector('.error').textContent = error.message;
+    document.title = 'Explorer 4.2.5 RC Preview — bloqueada';
+  }
+})();
+</script>
+</body>
+</html>
