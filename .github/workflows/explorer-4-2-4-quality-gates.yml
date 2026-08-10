@@ -22,15 +22,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Static syntax gate
-        run: node --check candidates/4.2.4/telemetry.js
+        run: |
+          node --check candidates/4.2.4/early-errors.js
+          node --check candidates/4.2.4/telemetry.js
 
       - name: Install pinned Playwright
         run: |
           npm init -y >/dev/null 2>&1
-          npm install --save-dev @playwright/test@1.54.2
+          npm install --save-dev --ignore-scripts @playwright/test@1.59.1
           npx playwright install --with-deps webkit
 
       - name: Start isolated preview server
