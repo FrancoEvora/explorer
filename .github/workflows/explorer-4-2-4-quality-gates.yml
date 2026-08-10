@@ -1,0 +1,64 @@
+name: Explorer 4.2.4 Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "candidates/4.2.4/**"
+      - ".github/workflows/explorer-4-2-4-quality-gates.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-iphone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Static syntax gate
+        run: node --check candidates/4.2.4/telemetry.js
+
+      - name: Install pinned Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --save-dev @playwright/test@1.54.2
+          npx playwright install --with-deps webkit
+
+      - name: Start isolated preview server
+        run: |
+          nohup python3 -m http.server 4173 > /tmp/explorer-preview.log 2>&1 &
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4173/candidates/4.2.4/preview-loader.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/explorer-preview.log
+          exit 1
+
+      - name: Run WebKit iPhone gates
+        run: npx playwright test candidates/4.2.4/e2e.spec.js --reporter=line
+
+      - name: Production delivery gate
+        run: |
+          curl -fsS -D /tmp/headers.txt https://explorer-six-self.vercel.app/ -o /tmp/explorer-production.html
+          grep -qi '^content-type: text/html; charset=utf-8' /tmp/headers.txt
+          grep -q '<title>Explorer 4.2.3</title>' /tmp/explorer-production.html
+          grep -q "const APP_VERSION = '4.2.3';" /tmp/explorer-production.html
+          grep -q 'activeStandardModal' /tmp/explorer-production.html
+          grep -q 'canMessageAuthor' /tmp/explorer-production.html
+
+      - name: Privacy source gate
+        run: |
+          grep -q 'MAX_EVENTS_PER_SESSION = 12' candidates/4.2.4/telemetry.js
+          grep -q '\[email\]' candidates/4.2.4/telemetry.js
+          grep -q '\[token\]' candidates/4.2.4/telemetry.js
+          if grep -q 'latitude:' candidates/4.2.4/telemetry.js; then exit 1; fi
+          if grep -q 'longitude:' candidates/4.2.4/telemetry.js; then exit 1; fi
