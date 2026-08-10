@@ -47,9 +47,10 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
   await page.waitForFunction(() => Boolean(window.Explorer?.telemetry), null, { timeout: 30000 });
 
   await expect(page.locator('#authView')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Criar conta' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Explorar' })).toBeVisible();
+  await expect(page.locator('#authTabLogin')).toBeVisible();
+  await expect(page.locator('#authTabSignup')).toBeVisible();
+  await expect(page.locator('#authTabExplore')).toBeVisible();
+  await expect(page.locator('#authSubmit')).toBeVisible();
 
   const layout = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
@@ -63,7 +64,7 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
   expect(pageErrors).toEqual([]);
 
-  await page.getByRole('button', { name: 'Explorar' }).click();
+  await page.locator('#authTabExplore').click();
   await expect(page.locator('#screen-explore')).toHaveClass(/active/);
   await expect(page.locator('#screen-map')).not.toHaveClass(/active/);
 
