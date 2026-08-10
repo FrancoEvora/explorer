@@ -5,7 +5,7 @@ test.use({
   browserName: 'webkit',
 });
 
-test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', async ({ page }) => {
+test('Explorer 4.2.5 RC — WebKit/iPhone, UX and privacy-safe telemetry', async ({ page }) => {
   const telemetryPosts = [];
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -43,7 +43,7 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
     timeout: 30000,
   });
   expect(response?.status()).toBe(200);
-  await expect(page).toHaveTitle('Explorer 4.2.4');
+  await expect(page).toHaveTitle('Explorer 4.2.5');
   await page.waitForFunction(() => Boolean(window.Explorer?.telemetry), null, { timeout: 30000 });
 
   await expect(page.locator('#authView')).toBeVisible();
@@ -58,7 +58,7 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
     version: window.Explorer?.config?.APP_VERSION,
     maxEvents: window.Explorer?.telemetry?.maxEventsPerSession,
   }));
-  expect(layout.version).toBe('4.2.4');
+  expect(layout.version).toBe('4.2.5');
   expect(layout.maxEvents).toBe(12);
   expect(layout.innerWidth).toBe(390);
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
@@ -71,14 +71,8 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
   await page.evaluate(async () => {
     const message = 'qa-telemetry user@example.com eyJabcdefgh.abcdefgh.abcdefgh https://example.com/path?secret=value';
     const error = new Error(message);
-    await window.Explorer.telemetry.capture(error, {
-      source: 'qa.redaction',
-      filename: 'https://example.com/app.js?token=secret',
-    });
-    await window.Explorer.telemetry.capture(error, {
-      source: 'qa.redaction',
-      filename: 'https://example.com/app.js?token=secret',
-    });
+    await window.Explorer.telemetry.capture(error, { source: 'qa.redaction', filename: 'https://example.com/app.js?token=secret' });
+    await window.Explorer.telemetry.capture(error, { source: 'qa.redaction', filename: 'https://example.com/app.js?token=secret' });
   });
 
   await expect.poll(() => telemetryPosts.filter((row) => row?.metadata?.source === 'qa.redaction').length, { timeout: 5000 }).toBe(1);
@@ -90,15 +84,14 @@ test('Explorer 4.2.4 RC1 — WebKit/iPhone, UX and privacy-safe telemetry', asyn
   expect(redacted.metadata.filename).toContain('token=[redacted]');
   expect(JSON.stringify(redacted.metadata)).not.toContain('latitude');
   expect(JSON.stringify(redacted.metadata)).not.toContain('longitude');
-  expect(redacted.app_version).toBe('4.2.4');
+  expect(redacted.app_version).toBe('4.2.5');
 
   await page.evaluate(async () => {
     const jobs = [];
-    for (let index = 0; index < 20; index += 1) {
-      jobs.push(window.Explorer.telemetry.capture(new Error('qa-rate-' + index), { source: 'qa.rate.' + index }));
-    }
+    for (let index = 0; index < 20; index += 1) jobs.push(window.Explorer.telemetry.capture(new Error('qa-rate-' + index), { source: 'qa.rate.' + index }));
     await Promise.all(jobs);
   });
   await page.waitForTimeout(700);
   expect(telemetryPosts.length).toBeLessThanOrEqual(12);
+  expect(pageErrors).toEqual([]);
 });
