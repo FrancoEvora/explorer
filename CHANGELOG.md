@@ -2,6 +2,27 @@
 
 Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 
+## [4.2.5] - 2026-08-10 — segunda candidata
+
+### Escala e banco
+
+- Otimiza 12 políticas RLS de telemetria, mensagens, notificações, marcadores, contatos de emergência, confirmações de risco e itens salvos.
+- Substitui avaliações por linha de `auth.uid()` por initplans `(select auth.uid())`, mantendo os mesmos papéis, comandos e condições de autorização.
+- Migração validada integralmente dentro de transação com `ROLLBACK` antes de aplicação persistente.
+- Nenhuma linha, coluna ou tipo de negócio é alterado.
+
+### Integridade de release
+
+- Remove o workflow legado `publish-explorer-v4.yml`, que ainda reconstruía e escrevia automaticamente a versão 4.0.3.
+- Corrige `VERSION`, que permanecia em 2.1.0, e passa a tratá-lo como fonte canônica no repositório.
+- Adiciona quality gates somente-leitura para impedir reintrodução do publicador legado e divergência de versão.
+
+### Qualidade
+
+- Consolida integralmente a observabilidade da candidata 4.2.4.
+- Prévia isolada e suíte WebKit/iPhone verificam renderização, overflow, modo visitante, redação, deduplicação e limite da telemetria.
+- Rollback de banco e frontend permanece explícito e versionado.
+
 ## [4.2.4] - 2026-08-10 — candidata retida
 
 ### Observabilidade
