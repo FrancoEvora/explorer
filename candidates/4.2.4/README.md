@@ -33,6 +33,8 @@ A ausência de DDL nesta candidata reduz o risco de rollback e mantém a produç
 
 Esta é a primeira candidata após a publicação da 4.2.3. Mesmo aprovada, deve permanecer retida. A produção só poderá avançar depois que uma segunda candidata independente também superar os gates.
 
+A validação final de publicação é executada pelo gate combinado 4.2.4 + 4.2.5, preservando esta candidata como primeira etapa auditável do ciclo.
+
 ## Rollback
 
 Ver `ROLLBACK.md`. O rollback de frontend é puro e não exige alteração no banco.
