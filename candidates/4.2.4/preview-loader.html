@@ -26,8 +26,9 @@
       .replace('<div class="auth-version">Explorer 4.2.3</div>', '<div class="auth-version">Explorer 4.2.4</div>')
       .replace('<p class="eyebrow">EXPLORER 4.2.3</p>', '<p class="eyebrow">EXPLORER 4.2.4</p>')
       .replace("const APP_VERSION = '4.2.3';", "const APP_VERSION = '4.2.4';")
-      .replace('<head>', '<head>\\n' + early)
-      .replace('\\n</body>', '\\n' + telemetry + '\\n</body>');
+      .replace('<head>', '<head>' + early)
+      .replace('</body>', telemetry + '</body>');
+    if (!html.includes('__explorerTelemetryInstalled') || !html.includes('<title>Explorer 4.2.4</title>')) throw new Error('Patch de observabilidade não aplicado.');
     document.open(); document.write(html); document.close();
   } catch (error) {
     status.innerHTML = '<strong>Prévia bloqueada</strong><p class="error"></p>';
