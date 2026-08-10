@@ -1,0 +1,84 @@
+name: Explorer 4.2.5 Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "candidates/4.2.4/**"
+      - "candidates/4.2.5/**"
+      - "VERSION"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-release-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Static syntax gate
+        run: |
+          set -euo pipefail
+          node --check candidates/4.2.4/early-errors.js
+          node --check candidates/4.2.4/telemetry.js
+          node --check candidates/4.2.5/e2e.spec.js
+
+      - name: Release governance gate
+        run: |
+          set -euo pipefail
+          test "$(tr -d '\r\n ' < VERSION)" = "4.2.5"
+          test ! -f .github/workflows/publish-explorer-v4.yml
+          grep -q '(select auth.uid())' candidates/4.2.5/migrations/20260810_01_optimize_rls_auth_initplans.sql
+          grep -q 'rollback' candidates/4.2.5/ROLLBACK.md
+
+      - name: Install pinned Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --save-dev --ignore-scripts @playwright/test@1.59.1
+          npm audit --audit-level=high
+          npx playwright install --with-deps webkit
+
+      - name: Freeze verified 4.2.3 production base
+        run: |
+          set -euo pipefail
+          curl -fsS -D /tmp/production-headers.txt https://explorer-six-self.vercel.app/ -o candidates/4.2.5/base-4.2.3.html
+          grep -qi '^content-type: text/html; charset=utf-8' /tmp/production-headers.txt
+          grep -q '<title>Explorer 4.2.3</title>' candidates/4.2.5/base-4.2.3.html
+          grep -q "const APP_VERSION = '4.2.3';" candidates/4.2.5/base-4.2.3.html
+          grep -q 'activeStandardModal' candidates/4.2.5/base-4.2.3.html
+          grep -q 'canMessageAuthor' candidates/4.2.5/base-4.2.3.html
+          test "$(wc -c < candidates/4.2.5/base-4.2.3.html)" -eq 192254
+          test "$(sha256sum candidates/4.2.5/base-4.2.3.html | cut -d' ' -f1)" = "3a8e540625e2d35453a09807ec03c65f29232b991eaa14572c832bdc3e085a85"
+
+      - name: Start isolated preview server
+        run: |
+          nohup python3 -m http.server 4173 > /tmp/explorer-preview.log 2>&1 &
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4173/candidates/4.2.5/preview-loader.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/explorer-preview.log
+          exit 1
+
+      - name: Run WebKit iPhone gates
+        run: npx playwright test candidates/4.2.5/e2e.spec.js --reporter=line
+
+      - name: Privacy source gate
+        run: |
+          set -euo pipefail
+          grep -q 'MAX_EVENTS_PER_SESSION = 12' candidates/4.2.4/telemetry.js
+          grep -q '\[email\]' candidates/4.2.4/telemetry.js
+          grep -q '\[token\]' candidates/4.2.4/telemetry.js
+          if grep -q 'latitude:' candidates/4.2.4/telemetry.js; then exit 1; fi
+          if grep -q 'longitude:' candidates/4.2.4/telemetry.js; then exit 1; fi
