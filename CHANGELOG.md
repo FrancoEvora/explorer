@@ -2,6 +2,28 @@
 
 Todas as alterações relevantes do Explorer serão registradas neste arquivo.
 
+## [4.2.4] - 2026-08-10 — candidata retida
+
+### Observabilidade
+
+- Adiciona buffer de erros de inicialização, captura de `window.error`, `unhandledrejection` e falhas de recursos no navegador.
+- Registra eventos na tabela `client_error_events` já existente, sem criar nova superfície de banco.
+- Expõe `Explorer.telemetry.capture()` para instrumentação controlada de fluxos futuros.
+
+### Privacidade e resiliência
+
+- Redação automática de e-mails, JWTs, bearer tokens, publishable keys e valores de query string.
+- Telemetria não coleta latitude, longitude, conteúdo de formulários, fotos, áudios ou mensagens privadas.
+- Deduplicação por assinatura e limite de 12 eventos por sessão evitam tempestade de logs.
+- Falha da própria telemetria é silenciosa e não interrompe a aplicação.
+
+### Qualidade
+
+- Função de prévia isolada versionada com JWT obrigatório.
+- Smoke test WebKit/iPhone valida renderização móvel, ausência de overflow, carregamento do runtime e funcionamento do modo visitante.
+- Escritas de QA em `client_error_events` são interceptadas no navegador; nenhum evento sintético é gravado na produção durante os testes.
+- Nenhuma migração de banco é necessária; rollback é exclusivamente de frontend.
+
 ## [4.2.3] - 2026-08-06 — publicada
 
 ### Acessibilidade e experiência
