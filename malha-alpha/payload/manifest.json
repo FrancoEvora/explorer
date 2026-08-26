@@ -1,0 +1,11 @@
+{
+  "name": "MALHA Alpha — Originação Territorial",
+  "version": "0.1.0",
+  "city": "Uberlândia/MG",
+  "chunks": 8,
+  "encoding": "base64+gzip",
+  "uncompressed_bytes": 118535,
+  "encoded_chars": 39008,
+  "sha256": "208a9c2bc1a9a426e5e81bf1a813b82c8cf3c74f9b07a5e0e104d57840519dc5",
+  "generated_at": "2026-08-26T23:37:00Z"
+}
