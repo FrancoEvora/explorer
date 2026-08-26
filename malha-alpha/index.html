@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07110f">
+  <title>MALHA Alpha — Originação Territorial</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}html,body{height:100%;margin:0}body{display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#14362e 0,#07110f 42%,#030706 100%);color:#eef8f2}
+    .boot{width:min(520px,calc(100% - 40px));padding:30px;border:1px solid rgba(199,235,213,.18);border-radius:24px;background:rgba(5,17,14,.84);box-shadow:0 28px 90px rgba(0,0,0,.42);backdrop-filter:blur(18px)}
+    .brand{display:flex;align-items:center;gap:14px}.mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#b8f5ce,#5fc48a);color:#052013;font-weight:900;letter-spacing:-.06em}.eyebrow{margin:0 0 3px;color:#92b7a1;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.title{margin:0;font-size:21px;letter-spacing:-.03em}.copy{margin:25px 0 18px;color:#b9cdc1;line-height:1.55;font-size:14px}.track{height:5px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.08)}.bar{height:100%;width:34%;border-radius:inherit;background:linear-gradient(90deg,#63d692,#d1f5dd);animation:move 1.15s ease-in-out infinite}.status{margin-top:12px;color:#779887;font-size:12px}.error{color:#ffb6ab}.retry{display:none;margin-top:18px;padding:11px 15px;border:0;border-radius:12px;background:#c8f0d6;color:#092117;font-weight:800;cursor:pointer}@keyframes move{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}
+  </style>
+</head>
+<body>
+  <section class="boot" aria-live="polite">
+    <div class="brand"><div class="mark">M</div><div><p class="eyebrow">Inteligência territorial</p><h1 class="title">MALHA Alpha</h1></div></div>
+    <p class="copy">Carregando o motor de originação fundiária, camadas territoriais e modelos de oportunidade.</p>
+    <div class="track"><div class="bar"></div></div>
+    <div class="status" id="status">Preparando a plataforma…</div>
+    <button class="retry" id="retry" type="button">Tentar novamente</button>
+  </section>
+  <script>
+    const PAYLOAD_BASE = 'https://raw.githubusercontent.com/FrancoEvora/explorer/malha-alpha/malha-alpha/payload/';
+    const CHUNKS = 8;
+    const statusEl = document.getElementById('status');
+    const retryEl = document.getElementById('retry');
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'status error' : 'status';
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function decompress(bytes) {
+      if ('DecompressionStream' in window) {
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        return new Response(stream).text();
+      }
+      await loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
+      return new TextDecoder().decode(window.pako.ungzip(bytes));
+    }
+
+    async function boot() {
+      retryEl.style.display = 'none';
+      setStatus('Sincronizando o pacote territorial…');
+      const responses = await Promise.all(
+        Array.from({ length: CHUNKS }, (_, index) =>
+          fetch(`${PAYLOAD_BASE}${index}.txt`, { cache: 'no-store' })
+        )
+      );
+      const failed = responses.find(response => !response.ok);
+      if (failed) throw new Error(`Falha ao carregar o pacote (${failed.status}).`);
+      const encoded = (await Promise.all(responses.map(response => response.text()))).join('').trim();
+      setStatus('Inicializando mapas e modelos…');
+      const binary = atob(encoded);
+      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+      const html = await decompress(bytes);
+      document.open();
+      document.write(html);
+      document.close();
+    }
+
+    function fail(error) {
+      console.error(error);
+      setStatus('Não foi possível iniciar a plataforma. Verifique a conexão e tente novamente.', true);
+      retryEl.style.display = 'inline-flex';
+    }
+
+    retryEl.addEventListener('click', () => boot().catch(fail));
+    boot().catch(fail);
+  </script>
+</body>
+</html>
