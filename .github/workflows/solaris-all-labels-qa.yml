@@ -1,0 +1,137 @@
+name: Solaris All Labels QA
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-all-labels-qa.yml', '.ops/all-labels-update.mjs']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build the exact candidate without changing the production entrypoint
+        run: |
+          node .ops/build-solaris.mjs
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import {applyAllLabelsUpdate,VERSION} from './.ops/all-labels-update.mjs';
+          const old=fs.readFileSync('solaris-dist/index.html','utf8');
+          const html=old.includes(VERSION)?old:applyAllLabelsUpdate(old);
+          for(const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
+          if(!html.includes('id="portaria-implantacao"')) throw new Error('The gate must be preserved');
+          fs.writeFileSync('solaris-dist/index.html',html);
+          const manifest=JSON.parse(fs.readFileSync('solaris-dist/version.json','utf8'));
+          fs.writeFileSync('solaris-dist/version.json',JSON.stringify({...manifest,version:VERSION,labelMode:'all-visible',namedPointCount:9}));
+          JS
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify nine names, nonoverlap, map gestures, gate and existing controls
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-qa/node_modules
+        run: |
+          mkdir -p qa-output
+          cat > qa-output/test.cjs <<'JS'
+          const {chromium,webkit}=require(process.env.QA_NODE_MODULES+'/playwright');
+          const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+          const root=path.resolve('solaris-dist');
+          const types={'.html':'text/html','.jpg':'image/jpeg','.webp':'image/webp','.json':'application/json','.js':'application/javascript','.webmanifest':'application/manifest+json'};
+          const server=http.createServer((req,res)=>{
+            const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+            const file=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
+            if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404);return res.end();}
+            res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);
+          });
+          async function verifyLabels(page,all=false){
+            const result=await page.evaluate(()=>{
+              const bounds=document.getElementById('stage').getBoundingClientRect();
+              const list=[...document.querySelectorAll('.map-label')].filter(el=>!el.hidden&&getComputedStyle(el).visibility==='visible');
+              const rects=list.map(el=>({id:el.id,text:el.textContent,r:el.getBoundingClientRect().toJSON(),clipped:el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1}));
+              const errors=[];
+              for(const a of rects){
+                if(a.clipped)errors.push(a.id+' text truncated');
+                if(a.r.left<bounds.left-1||a.r.right>bounds.right+1||a.r.top<bounds.top-1||a.r.bottom>bounds.bottom+1)errors.push(a.id+' outside viewport');
+              }
+              for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++){
+                const a=rects[i],b=rects[j];
+                if(a.r.left<b.r.right-1&&a.r.right>b.r.left+1&&a.r.top<b.r.bottom-1&&a.r.bottom>b.r.top+1)errors.push(a.id+' overlaps '+b.id);
+              }
+              return {names:rects.map(x=>x.text),errors};
+            });
+            if(all)assert.equal(result.names.length,9,'All nine names must be visible in overview');
+            assert.deepEqual(result.errors,[]);
+            return result;
+          }
+          (async()=>{
+            await new Promise(r=>server.listen(8877,'127.0.0.1',r));
+            const report={version:'2026-09-22-all-labels-v4',checks:[]};
+            const specs=[
+              {name:'iphone-webkit',engine:webkit,viewport:{width:440,height:780},mobile:true},
+              {name:'iphone-compact-webkit',engine:webkit,viewport:{width:375,height:667},mobile:true},
+              {name:'iphone-landscape-webkit',engine:webkit,viewport:{width:844,height:390},mobile:true},
+              {name:'desktop-chromium',engine:chromium,viewport:{width:1440,height:900},mobile:false}
+            ];
+            for(const spec of specs){
+              const browser=await spec.engine.launch({headless:true});
+              try{
+                const page=await browser.newPage({viewport:spec.viewport,deviceScaleFactor:1,isMobile:spec.mobile,hasTouch:spec.mobile});
+                const errors=[];page.on('pageerror',e=>errors.push(e.message));
+                assert.equal((await page.goto('http://127.0.0.1:8877/',{waitUntil:'networkidle'})).status(),200);
+                await page.waitForSelector('#stage.ready');
+                await page.waitForSelector('#app[data-visible-labels="9"]');
+                await page.waitForTimeout(180);
+                assert.equal(await page.locator('.scene').count(),10);
+                assert.equal(await page.locator('#portaria-implantacao').count(),1);
+                assert.equal(await page.locator('canvas').count(),0);
+                assert.equal(await page.locator('#masterplan').evaluate(el=>el.naturalWidth),1448);
+                const overview=await verifyLabels(page,true);
+                await page.screenshot({path:'qa-output/'+spec.name+'-overview.png'});
+                for(const id of ['portaria','praca','bosque','lago','clube','quadras','hipica','acesso','parque']){
+                  await page.locator('#scene-'+id).click();await page.waitForTimeout(950);
+                  assert.equal(await page.locator('#detail').isVisible(),true);
+                  assert.equal(await page.locator('#label-'+id).isVisible(),true);
+                  await verifyLabels(page);
+                  if(['portaria','clube'].includes(id))await page.screenshot({path:'qa-output/'+spec.name+'-'+id+'.png'});
+                }
+                await page.locator('#home').click();await page.waitForTimeout(900);
+                if(spec.mobile)await page.locator('#label-clube').tap();else await page.locator('#label-clube').click();
+                await page.waitForTimeout(950);
+                assert.equal(await page.locator('#detailTitle').textContent(),'Clube e Piscinas');
+                const before=await page.locator('#plane').getAttribute('style');
+                await page.locator('#zoomIn').click();await page.waitForTimeout(150);
+                assert.notEqual(await page.locator('#plane').getAttribute('style'),before);
+                const stage=await page.locator('#stage').boundingBox();
+                const dragBefore=await page.locator('#plane').getAttribute('style');
+                await page.mouse.move(stage.x+30,stage.y+stage.height*.5);await page.mouse.down();
+                await page.mouse.move(stage.x+85,stage.y+stage.height*.5+30,{steps:8});await page.mouse.up();
+                assert.notEqual(await page.locator('#plane').getAttribute('style'),dragBefore);
+                await page.locator('#home').click();await page.waitForTimeout(900);
+                await verifyLabels(page,true);
+                await page.locator('#clean').click();assert.equal(await page.locator('#exitClean').isVisible(),true);
+                assert.equal(await page.locator('.map-label:visible').count(),0);
+                await page.locator('#exitClean').click();await page.waitForTimeout(900);await verifyLabels(page,true);
+                await page.locator('#tour').click();await page.waitForTimeout(950);
+                assert.equal(await page.locator('#detailTitle').textContent(),'Portaria');
+                await page.locator('#tour').click();
+                assert.deepEqual(errors,[]);
+                report.checks.push({browser:spec.name,result:'passed',overviewNames:overview.names,nonoverlap:true,fullNames:true,gatePreserved:true,mapNavigation:true,clickableLabels:true,javascriptErrors:errors});
+              }finally{await browser.close();}
+            }
+            fs.writeFileSync('qa-output/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));server.close();
+          })().catch(e=>{console.error(e);server.close();process.exitCode=1;});
+          JS
+          node qa-output/test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-all-labels-qa
+          path: |
+            qa-output/
+            solaris-dist/
+          retention-days: 7
