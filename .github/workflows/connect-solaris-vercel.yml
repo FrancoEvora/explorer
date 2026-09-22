@@ -1,5 +1,6 @@
 name: Conectar e publicar Solaris no Vercel
 
+# One-time owner-authorized connection; ordinary site commits do not request a new login.
 on:
   push:
     branches: [solaris-imersivo-mobile]
@@ -24,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Validate and build isolated Solaris site
+      - name: Validate and build isolated Solaris site with the original WebP masterplan
         run: |
           node --check .ops/build-solaris.mjs
           python3 -m py_compile .ops/connect-solaris-vercel.py
