@@ -85,7 +85,7 @@ function installAllLabels() {
       if(show){item.anchor={x,y};visible.push(item);}
     }
     const circles=visible.map(i=>({x:i.anchor.x-15,y:i.anchor.y-15,w:30,h:30}));
-    const blocked=[obstacle(document.querySelector('.toolbox'),base),obstacle(document.getElementById('detail'),base)].filter(Boolean);
+    const blocked=[obstacle(document.querySelector('.toolbox'),base),obstacle(document.getElementById('detail'),base),app.classList.contains('exploring')?null:obstacle(document.querySelector('.intro'),base)].filter(Boolean);
     const placed=[];
     for(const item of visible){
       const {x:ax,y:ay}=item.anchor, w=item.label.offsetWidth,h=item.label.offsetHeight;
