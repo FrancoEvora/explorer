@@ -1,9 +1,11 @@
 {
-  "status": "connected_publishing",
+  "status": "published_and_http_verified",
   "project": "solaris-imersivo",
   "repository": "FrancoEvora/explorer",
   "branch": "solaris-imersivo-mobile",
-  "updated_at": "2026-09-22T16:47:06.353759+00:00",
+  "updated_at": "2026-09-22T16:47:17.008894+00:00",
   "run_url": "https://github.com/FrancoEvora/explorer/actions/runs/35755823235",
-  "message": "Exact GitHub repository and production branch confirmed by Vercel. Starting the Solaris deployment."
+  "deployment_id": "dpl_BdjwcPZgs43r1J4VgyEpiGSQqt68",
+  "deployment_url": "https://solaris-imersivo.vercel.app",
+  "message": "Git connection and production branch confirmed. Public HTML and image returned HTTP 200."
 }
