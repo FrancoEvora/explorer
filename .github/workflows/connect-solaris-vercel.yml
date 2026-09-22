@@ -1,0 +1,35 @@
+name: Conectar e publicar Solaris no Vercel
+
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths:
+      - '.github/workflows/connect-solaris-vercel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solaris-vercel-owner-connection
+  cancel-in-progress: false
+
+jobs:
+  connect:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout only the requested branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate and build isolated Solaris site
+        run: |
+          node --check .ops/build-solaris.mjs
+          python3 -m py_compile .ops/connect-solaris-vercel.py
+          node .ops/build-solaris.mjs
+      - name: Request owner authorization, connect GitHub and publish Solaris
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -u .ops/connect-solaris-vercel.py
