@@ -53,8 +53,7 @@ def request(url, method='GET', data=None, token=None, form=False, allow_error=Fa
     try:
         with OPENER.open(urllib.request.Request(url, data=raw, headers=headers, method=method), timeout=30) as r:
             body = r.read()
-            result = json.loads(body) if body else {}
-            return result
+            return json.loads(body) if body else {}
     except urllib.error.HTTPError as exc:
         try:
             detail = json.loads(exc.read())
@@ -122,6 +121,7 @@ def connect_and_publish(token):
     if (confirmed.get('type'), confirmed.get('org'), confirmed.get('repo'), confirmed.get('productionBranch')) != ('github', 'FrancoEvora', 'explorer', BRANCH):
         raise RuntimeError('Vercel did not confirm the requested repository and production branch.')
     print('Confirmed: Solaris is connected to FrancoEvora/explorer, production branch solaris-imersivo-mobile.', flush=True)
+    publish_status('connected_publishing', message='Exact GitHub repository and production branch confirmed by Vercel. Starting the Solaris deployment.')
 
     # Pin the reviewed workflow/source commit, not a later status-only commit.
     deployment = vercel('/v13/deployments', token, 'POST', {
@@ -151,9 +151,9 @@ def connect_and_publish(token):
             req = urllib.request.Request(public_url, headers={'User-Agent': USER_AGENT})
             with OPENER.open(req, timeout=20) as response:
                 html = response.read().decode('utf-8')
-                verified = response.status == 200 and '2026-09-22-web-1' in html and 'src="./masterplan.jpg"' in html
+                verified = response.status == 200 and '2026-09-22-web-1' in html and 'src="./masterplan.webp"' in html
             if verified:
-                with OPENER.open(public_url + '/masterplan.jpg', timeout=20) as image:
+                with OPENER.open(public_url + '/masterplan.webp', timeout=20) as image:
                     verified = image.status == 200 and len(image.read()) > 10000
             if verified:
                 break
@@ -169,7 +169,7 @@ def connect_and_publish(token):
 def main():
     if os.environ.get('GITHUB_REPOSITORY') != REPOSITORY or os.environ.get('GITHUB_REF_NAME') != BRANCH:
         raise RuntimeError('Unexpected repository or branch. Operation blocked.')
-    if not Path('solaris-dist/masterplan.jpg').exists():
+    if not Path('solaris-dist/masterplan.webp').exists():
         raise RuntimeError('Validated static build is missing. Operation blocked.')
     metadata = request('https://vercel.com/.well-known/openid-configuration')
     if metadata.get('issuer', '').rstrip('/') != 'https://vercel.com':
