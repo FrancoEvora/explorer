@@ -1,0 +1,45 @@
+name: Deploy Solaris Imersivo to Vercel
+
+on:
+  push:
+    branches:
+      - solaris-imersivo-mobile
+    paths:
+      - "index.html"
+      - ".github/workflows/deploy-solaris-imersivo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solaris-imersivo-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: team_MqRTvNvoaArIVzGLcNA6OU4v
+      VERCEL_PROJECT_ID: prj_ukVJSEoM4nv5WaRQQbfjtaRsSElj
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Vercel credential
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN secret is not configured for this repository."
+            exit 1
+          fi
+
+      - name: Deploy production
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx --yes vercel@latest deploy --prod --yes --token="$VERCEL_TOKEN"
