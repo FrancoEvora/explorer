@@ -1,0 +1,110 @@
+name: Solaris Landmarks QA
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-landmarks-qa.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare the exact image-only release candidate
+        run: |
+          node .ops/build-solaris.mjs
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import {applyLocationUpdate, VERSION, SCENES} from './.ops/location-update.mjs';
+          const source=fs.readFileSync('site/index.html','utf8');
+          let html=applyLocationUpdate(source);
+          for(const s of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(s[1]);
+          if(/<canvas|WebGLRenderer|three\.module|DeviceOrientationEvent|rotateX\(/i.test(html)) throw new Error('3D is not allowed');
+          html=html.replace('</head>','<link rel="manifest" href="./manifest.webmanifest"></head>');
+          fs.writeFileSync('solaris-dist/index.html',html);
+          fs.writeFileSync('solaris-dist/version.json',JSON.stringify({version:VERSION,sceneCount:SCENES.length,mode:'image-only',volumetry:false}));
+          JS
+      - name: Install isolated browser test tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify image loading, marked locations, mobile navigation and presentation
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-qa/node_modules
+        run: |
+          mkdir -p qa-output
+          cat > qa-output/test.cjs <<'JS'
+          const {chromium,webkit}=require(process.env.QA_NODE_MODULES+'/playwright');
+          const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+          const root=path.resolve('solaris-dist');
+          const types={'.html':'text/html','.jpg':'image/jpeg','.webp':'image/webp','.json':'application/json','.js':'application/javascript','.webmanifest':'application/manifest+json'};
+          const server=http.createServer((req,res)=>{
+            const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+            const file=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
+            if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404);return res.end();}
+            res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);
+          });
+          (async()=>{
+            await new Promise(r=>server.listen(8877,'127.0.0.1',r));
+            const report={version:'2026-09-22-landmarks-v3',checks:[]};
+            for(const spec of [{name:'iphone-webkit',engine:webkit,viewport:{width:440,height:780},mobile:true},{name:'desktop-chromium',engine:chromium,viewport:{width:1440,height:900},mobile:false}]){
+              const browser=await spec.engine.launch({headless:true});
+              try{
+                const page=await browser.newPage({viewport:spec.viewport,deviceScaleFactor:1,isMobile:spec.mobile,hasTouch:spec.mobile});
+                const errors=[];page.on('pageerror',e=>errors.push(e.message));
+                const response=await page.goto('http://127.0.0.1:8877/',{waitUntil:'networkidle'});assert.equal(response.status(),200);
+                await page.waitForSelector('#stage.ready');
+                assert.equal(await page.locator('.scene').count(),10);
+                assert.equal(await page.locator('.pin.featured').count(),3);
+                assert.equal(await page.locator('#portaria-implantacao').count(),1);
+                assert.equal(await page.locator('canvas').count(),0);
+                assert.equal(await page.locator('#masterplan').evaluate(el=>el.naturalWidth),1448);
+                await page.screenshot({path:'qa-output/'+spec.name+'-geral.png'});
+                for(const [id,title,x,y] of [['praca','Praça',.649,.4753],['portaria','Portaria',.5628,.5108],['bosque','Bosque e Pista de Caminhada',.3146,.2095]]){
+                  await page.locator('#scene-'+id).click();await page.waitForTimeout(950);
+                  assert.equal(await page.locator('#detailTitle').textContent(),title);
+                  assert.equal(await page.locator('#detail').isVisible(),true);
+                  const loc=await page.evaluate(({id,x,y})=>{
+                    const img=document.getElementById('masterplan').getBoundingClientRect();
+                    const stage=document.getElementById('stage').getBoundingClientRect();
+                    const pin=document.getElementById('pin-'+id);
+                    return {dx:Math.abs(stage.left+parseFloat(pin.style.left)-(img.left+img.width*x)),dy:Math.abs(stage.top+parseFloat(pin.style.top)-(img.top+img.height*y)),hidden:pin.hidden};
+                  },{id,x,y});
+                  assert(loc.dx<1 && loc.dy<1 && !loc.hidden,'Marker must stay calibrated to its image location');
+                  await page.screenshot({path:'qa-output/'+spec.name+'-'+id+'.png'});
+                  await page.locator('#closeDetail').click();assert.equal(await page.locator('#detail').isVisible(),false);
+                  await page.locator('#scene-'+id).click();assert.equal(await page.locator('#detail').isVisible(),true);
+                }
+                await page.locator('#zoomIn').click();await page.waitForTimeout(150);
+                const before=await page.locator('#plane').getAttribute('style');
+                const stage=await page.locator('#stage').boundingBox();
+                await page.mouse.move(stage.x+stage.width*.44,stage.y+stage.height*.58);await page.mouse.down();
+                await page.mouse.move(stage.x+stage.width*.44+52,stage.y+stage.height*.58+38,{steps:8});await page.mouse.up();
+                assert.notEqual(await page.locator('#plane').getAttribute('style'),before);
+                assert.equal(await page.locator('#detail').isVisible(),false);
+                await page.locator('#home').click();await page.waitForTimeout(850);
+                await page.locator('#clean').click();assert.equal(await page.locator('#exitClean').isVisible(),true);
+                await page.locator('#exitClean').click();
+                await page.locator('#tour').click();await page.waitForTimeout(900);
+                assert.equal(await page.locator('#detailTitle').textContent(),'Portaria');
+                assert.equal(await page.locator('#tour').getAttribute('aria-pressed'),'true');
+                await page.locator('#tour').click();assert.equal(await page.locator('#tour').getAttribute('aria-pressed'),'false');
+                assert.deepEqual(errors,[]);
+                report.checks.push({browser:spec.name,result:'passed',javascriptErrors:errors,sceneCount:10,calibratedLandmarks:3,gateIllustration:true,drag:true,zoom:true,guidedTour:true});
+              }finally{await browser.close();}
+            }
+            fs.writeFileSync('qa-output/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+            server.close();
+          })().catch(e=>{console.error(e);server.close();process.exitCode=1;});
+          JS
+          node qa-output/test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-landmarks-qa
+          path: qa-output/
+          retention-days: 7
