@@ -1,0 +1,43 @@
+name: Import approved Solaris masterplan
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-import-masterplan.yml']
+permissions:
+  contents: write
+jobs:
+  import-image:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import the exact user-approved image without generating geometry
+        env:
+          SOURCE_IMAGE: 'https://d2jqrm6oza8nb6.cloudfront.net/datasets/ef1dcba1-5398-4f4f-9251-486c71d04d7a.png?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiMjEzNGQ4OTZlNTU0ZmM2MCIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5MDIxMjI0Nn0.ELiwrEZk8nteuqIRK5VxImhxqexzUwPkw8rnRsG3ir4'
+        run: |
+          python -m pip install --quiet Pillow==11.3.0
+          python - <<'PY'
+          import hashlib, io, os, urllib.request
+          from pathlib import Path
+          from PIL import Image
+          with urllib.request.urlopen(os.environ['SOURCE_IMAGE'], timeout=45) as response:
+              raw = response.read(12_000_000)
+          assert hashlib.sha256(raw).hexdigest() == '52a3a2f241136da2683212881360a4601b1fd35cf01c4e2e0c72060c85278fa9', 'Reference image mismatch'
+          image = Image.open(io.BytesIO(raw)).convert('RGB')
+          assert image.size == (1448, 1086), 'Unexpected image dimensions'
+          output = Path('site/assets')
+          output.mkdir(parents=True, exist_ok=True)
+          image.save(output/'masterplan.webp', 'WEBP', quality=92, method=6)
+          image.save(output/'masterplan.jpg', 'JPEG', quality=94, optimize=True, progressive=True)
+          print('Approved masterplan imported: 1448 x 1086. No new visual content generated.')
+          PY
+      - name: Save assets only to the Solaris branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/assets/masterplan.webp site/assets/masterplan.jpg
+          git diff --cached --quiet && exit 0
+          git commit -m 'assets(solaris): preserve approved masterplan at original resolution'
+          git pull --rebase origin solaris-imersivo-mobile
+          git push origin HEAD:solaris-imersivo-mobile
