@@ -1,0 +1,34 @@
+name: Solaris v22 Review Source
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-v22-review-source.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.repository == 'FrancoEvora/explorer' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Package only reviewed application sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          root=Path('review-source');root.mkdir()
+          names=['site','.ops/build-solaris.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','.ops/game-update.mjs','.ops/conquest-update.mjs','.ops/v22-source.0.b64','.ops/v22-source.1.b64','.ops/v22-qa-diagnostics.py','.ops/v22-buffered-score.js','tests/solaris-v22.cjs','tests/solaris-conquista.cjs','vercel.json']
+          for name in names:
+              src=Path(name)
+              if not src.exists():continue
+              dst=root/src;dst.parent.mkdir(parents=True,exist_ok=True)
+              if src.is_dir():shutil.copytree(src,dst)
+              else:shutil.copy2(src,dst)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: solaris-v22-review-source
+          path: review-source/
+          include-hidden-files: true
+          retention-days: 3
