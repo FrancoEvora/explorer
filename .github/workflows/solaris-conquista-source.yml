@@ -17,16 +17,17 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import shutil
+          import shutil,subprocess
           root=Path('review-source');root.mkdir()
-          for name in ['site/index.html','site/game','site/assets','.ops/build-solaris.mjs','.ops/game-update.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','tests/solaris-game.cjs','vercel.json']:
+          for name in ['site/index.html','site/game','site/conquista','site/assets','.ops/build-solaris.mjs','.ops/game-update.mjs','.ops/conquest-update.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','tests/solaris-game.cjs','tests/solaris-conquista.cjs','vercel.json']:
               src=Path(name);dst=root/src;dst.parent.mkdir(parents=True,exist_ok=True)
               if src.is_dir():shutil.copytree(src,dst)
               else:shutil.copy2(src,dst)
+          (root/'source-commit.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: solaris-conquista-source
+          name: solaris-audio-map-source
           path: review-source/
           include-hidden-files: true
           retention-days: 3
