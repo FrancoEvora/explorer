@@ -1,0 +1,82 @@
+name: Solaris Day Game Release
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-game-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-day-game-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify and unpack the exact reviewed game source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .ops/build-solaris.mjs)" = '4a6f8eba62a08ca592c75263ec82a462f734ee4d'
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          parts = [Path(f'.ops/game-source-v1.{i}.b64').read_text() for i in range(3)]
+          # Repair the two verified transport insertions, not any application source.
+          parts[2] = parts[2].replace('t3py1dfn', 't3py1fn').replace('BGKfr034', 'BGK034')
+          raw = base64.b64decode(''.join(parts), validate=True)
+          expected = 'add4ed6a28dd6266bbcf9bbf20295b2dbd3bb11f804e062f79aac7dd70346b41'
+          assert hashlib.sha256(raw).hexdigest() == expected, 'Transfer checksum mismatch; no source or deployment changed.'
+          files = json.loads(gzip.decompress(raw))
+          allowed = {'.ops/game-update.mjs', 'tests/solaris-game.cjs', 'site/game/index.html', 'site/game/game.css', 'site/game/game.js', 'site/game/README.md'}
+          assert set(files) == allowed
+          for name, content in files.items():
+              target = Path(name)
+              assert not target.exists(), 'Do not overwrite concurrent game edits.'
+              assert isinstance(content, str) and len(content) < 100000
+              target.parent.mkdir(parents=True, exist_ok=True)
+              assert not target.parent.is_symlink()
+              target.write_text(content, encoding='utf-8')
+          Path('.ops/game-source-v1.2.b64').write_text(parts[2], encoding='ascii')
+          print('Verified six source files against the locally tested bundle.')
+          PY
+      - name: Build candidate alongside the unchanged labelled map
+        run: |
+          node .ops/build-solaris.mjs
+          node --input-type=module -e "import {installGame} from './.ops/game-update.mjs'; installGame();"
+          node --check site/game/game.js
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-game-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-game-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Play all three missions, verify iPhone persistence and album export
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-game-qa/node_modules
+        run: node tests/solaris-game.cjs
+      - name: Enable the tested game and commit only the reviewed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.ops/build-solaris.mjs')
+          s = p.read_text()
+          assert "import('./game-update.mjs')" not in s
+          p.write_text(s + "\n// Optional 2D day-game, verified in mobile WebKit and desktop Chromium.\nawait import('./game-update.mjs').then(m => m.installGame());\n")
+          PY
+          node .ops/build-solaris.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .ops/game-update.mjs .ops/build-solaris.mjs .ops/game-source-v1.2.b64 site/game tests/solaris-game.cjs
+          git commit -m 'feat(solaris): publish Um dia no Solaris after mobile WebKit and desktop gameplay tests'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-output/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-game-qa
+          path: qa-output/
+          retention-days: 7
