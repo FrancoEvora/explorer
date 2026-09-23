@@ -1,0 +1,103 @@
+name: Solaris Map and Audio Release
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-map-audio-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-map-audio-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify exact source and unpack reviewed update
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,gzip,hashlib,json
+          old={'site/conquista/conquista.js':'5c35b291451d8b8b34e62d43f2a7f11a3d31eb86','site/conquista/conquista.css':'2b5396c2fe4d172932e8acc00d449e6c0bca78d8','site/conquista/index.html':'74914803e7594403e83ad0c7b2464895c15fc688','site/conquista/paths.js':'62043f8bda8ca542e4794333bf951bb8cc2fdec4','site/conquista/README.md':'aefe7cadbce53348af46a5a9a20a0eb6028d2a34','.ops/conquest-update.mjs':'f7aad4eacd9bd09e2fc55aa1b3e8e918d2bbe9e0'}
+          for name,expected in old.items():
+              data=Path(name).read_bytes()
+              assert hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()==expected, f'Concurrent change: {name}'
+          parts=[Path(f'.ops/map-audio-v21.{i}.b64').read_text() for i in range(3)]
+          # Correct verified text-transport insertions; the complete archive checksum remains mandatory.
+          parts[0]=parts[0].replace('LOh6leKK/w1','LOh6leK/w1').replace('ZnkdCC766','ZnkdC766').replace('CAXPdUwScuVJJqQ','CAXPdUwScuVJqQ')
+          parts[1]=parts[1].replace('Npts8RubLX','Npts8buLX')
+          raw=base64.b64decode(''.join(parts),validate=True)
+          assert hashlib.sha256(raw).hexdigest()=='3c3617e8b1b5c2c26b7b17abf35f675c07b41b44410b5e73e2e8967e961f901f', 'Transport checksum mismatch. No application changed.'
+          files=json.loads(gzip.decompress(raw))
+          allowed={'.ops/install-map-audio-v21.py','site/conquista/audio.js','tests/solaris-map-audio.cjs'}
+          assert set(files)==allowed
+          for name,content in files.items():
+              target=Path(name)
+              assert not target.exists(), f'Concurrent file exists: {name}'
+              assert isinstance(content,str) and len(content)<100000
+              target.parent.mkdir(parents=True,exist_ok=True)
+              assert not target.parent.is_symlink()
+              target.write_text(content,encoding='utf-8')
+          for i,part in enumerate(parts):Path(f'.ops/map-audio-v21.{i}.b64').write_text(part,encoding='ascii')
+          print('Update checksum validated; existing source matched exactly.')
+          PY
+          python3 .ops/install-map-audio-v21.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          expected={'site/conquista/conquista.js':'7707f4b837e51fda30717a054ef41c9ed3f7190526cb6e9f10ff52423ef51321','site/conquista/conquista.css':'a8dcaa5ea90161be481735fecc025b8f98eaeeb51631aec6868d82f02354147b','site/conquista/index.html':'e8f2ab30acd01229cea219e4ce0f12a766d4d16edb8ec940b274d20afdc7e0e5','site/conquista/paths.js':'b6cf8468666e902773ac3a1d9ccfbbb68c2da17f4204c115193011f5852211ec','site/conquista/README.md':'8a17dc5f1ad64733a717728de13bb5481e7869cbb80a1c1a36f0375790b4e432','.ops/conquest-update.mjs':'9ec0ef9ea54b3ea74b0d2e100f9c4c391be27648137687b81b9792c4774f31fe','site/conquista/audio.js':'f662db116cf67f07d711a4fb70a5cbbd4afde0820a7822ef364e7c3af381f20d','tests/solaris-map-audio.cjs':'e0ac6d47f07684fb73a2d52ff0885d3fd7e72b95725c7894760124278e5b6522'}
+          for name,digest in expected.items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, f'Candidate mismatch: {name}'
+          print('All eight output files match the locally reviewed and tested source.')
+          PY
+      - name: Build candidate without changing production files
+        run: |
+          node .ops/build-solaris.mjs
+          node --check site/conquista/conquista.js
+          node --check site/conquista/audio.js
+          node --check site/conquista/paths.js
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-audio-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-audio-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Play all 15 phases and verify existing rewards, saves, exports and original map
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-audio-qa/node_modules
+          QA_OUTPUT: qa-regression
+        run: node tests/solaris-conquista.cjs
+      - name: Verify all locations, real audio samples, mute, volume and iPhone resume
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-audio-qa/node_modules
+          QA_AUDIO_OUTPUT: qa-audio
+        run: node tests/solaris-map-audio.cjs
+      - name: Publish only the successfully tested update
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,os
+          for name in ['qa-regression/report.json','qa-audio/report.json']:
+              report=json.loads(Path(name).read_text())
+              assert report['passed'] is True and all(r['passed'] for r in report['reports'])
+          Path('.ops/map-audio-release-status.json').write_text(json.dumps({'version':'solaris-conquista-v2.1','path':'/jogo/','places':9,'freeExploration':True,'sequentialChallengesPreserved':True,'audio':'Web Audio synthesis with user activation','volumeControls':True,'saveKeyPreserved':'solaris-conquista-v2','qaPassed':True,'qaRun':'https://github.com/FrancoEvora/explorer/actions/runs/'+os.environ['GITHUB_RUN_ID']},ensure_ascii=False,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/paths.js site/conquista/README.md site/conquista/audio.js .ops/conquest-update.mjs .ops/install-map-audio-v21.py .ops/map-audio-release-status.json .ops/map-audio-v21.0.b64 .ops/map-audio-v21.1.b64 .ops/map-audio-v21.2.b64 tests/solaris-map-audio.cjs
+          git commit -m 'feat(solaris): publish all nine places and interactive sound after WebKit and Chromium verification'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-audio/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-map-audio-qa
+          path: |
+            qa-audio/
+            qa-regression/
+          retention-days: 7
