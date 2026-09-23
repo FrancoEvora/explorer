@@ -4,6 +4,8 @@ import vm from 'node:vm';
 import { applyLocationUpdate, SCENES } from './location-update.mjs';
 import { applyAllLabelsUpdate, VERSION } from './all-labels-update.mjs';
 
+const NAVIGATION_VERSION = '2026-09-23-navigation-only-v5';
+
 // Only the reviewed Solaris image viewer is published. Keep Explorer, workflows and credentials out.
 const out = path.resolve('solaris-dist');
 const source = path.resolve('site');
@@ -20,6 +22,10 @@ if (!html.includes(VERSION) || !html.includes('id="portaria-implantacao"') || !h
 if (/<canvas|WebGLRenderer|three\.module|DeviceOrientationEvent|rotateX\(/i.test(html)) {
   throw new Error('Unexpected volumetric renderer or simulated AR in the image-only build.');
 }
+if (/installGame|installConquest|SolarisQuest|AudioContext|missionDialog|welcomeForm|href=["'][^"']*(?:jogo|passeio)\//i.test(html)) {
+  throw new Error('Unexpected game or audio entry in the navigation-only page.');
+}
+html = html.replaceAll(VERSION, NAVIGATION_VERSION);
 for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 const webp = fs.readFileSync(path.join(source, 'assets/masterplan.webp'));
 const jpg = fs.readFileSync(path.join(source, 'assets/masterplan.jpg'));
@@ -34,7 +40,12 @@ fs.writeFileSync(path.join(out, 'manifest.webmanifest'), JSON.stringify({ name:'
 // Retire only the legacy Solaris worker; never retain stale HTML between releases.
 fs.writeFileSync(path.join(out, 'sw.js'), "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.registration.unregister()));");
 fs.writeFileSync(path.join(out, 'version.json'), JSON.stringify({
-  version: VERSION,
+  version: NAVIGATION_VERSION,
+  labelVersion: VERSION,
+  gameEnabled: false,
+  musicEnabled: false,
+  navigationOnly: true,
+  retiredGameRoutes: ['/jogo', '/passeio'],
   mode: 'image-only',
   volumetry: false,
   referenceImage: { width:1448, height:1086 },
@@ -44,12 +55,13 @@ fs.writeFileSync(path.join(out, 'version.json'), JSON.stringify({
   locations: SCENES.filter(s=>s.id!=='geral').map(s=>({ id:s.id, name:s.name, x:s.x, y:s.y })),
   gateRepresentation: 'two-dimensional illustrative implantation',
   entry: 'site/index.html + .ops/location-update.mjs + .ops/all-labels-update.mjs',
-  qaRun: 'https://github.com/FrancoEvora/explorer/actions/runs/35799533746'
+  labelsQaRun: 'https://github.com/FrancoEvora/explorer/actions/runs/35799533746'
 }));
 console.log(`Solaris ${VERSION}: ${SCENES.length-1} permanently named points, collision-aware mobile labels, original image and gate preserved. All assets are local.`);
 
-// Optional 2D day-game, verified in mobile WebKit and desktop Chromium.
-await import('./game-update.mjs').then(m => m.installGame());
-
-// Explore e Conquiste: virtual-only progression, verified through all 15 phases.
-await import('./conquest-update.mjs').then(m => m.installConquest());
+// Navigation only: the game installers intentionally do not run.
+// Historical game sources and local visitor saves are not modified or published.
+const publicFiles = fs.readdirSync(out, { recursive: true }).filter(name => fs.statSync(path.join(out, name)).isFile()).sort();
+const allowedFiles = ['assets/masterplan.jpg', 'assets/masterplan.webp', 'index.html', 'manifest.webmanifest', 'sw.js', 'version.json'];
+if (JSON.stringify(publicFiles) !== JSON.stringify(allowedFiles)) throw new Error('Unexpected file in the navigation-only release.');
+console.log(`Solaris ${NAVIGATION_VERSION}: navigation only, no game runtime or game assets published.`);

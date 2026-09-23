@@ -1,0 +1,19 @@
+{
+  "version": "2026-09-23-navigation-only-v5",
+  "navigationOnly": true,
+  "gameEnabled": false,
+  "gameAssetsPublished": false,
+  "musicEnabled": false,
+  "namedLocations": 9,
+  "masterplanPreserved": true,
+  "gatePreserved": true,
+  "guidedTourPreserved": true,
+  "retiredRoutes": [
+    "/jogo",
+    "/passeio"
+  ],
+  "redirectTo": "/",
+  "qaPassed": true,
+  "hardwareIPhoneTest": false,
+  "qaRun": "https://github.com/FrancoEvora/explorer/actions/runs/35876444681"
+}
