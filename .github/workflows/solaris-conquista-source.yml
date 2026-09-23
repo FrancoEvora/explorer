@@ -13,13 +13,13 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Package application files only for v2.2 review
+      - name: Package only current Solaris application and tests for touch diagnosis
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import shutil,subprocess
           root=Path('review-source');root.mkdir()
-          for name in ['site/index.html','site/game','site/conquista','site/assets','.ops/build-solaris.mjs','.ops/game-update.mjs','.ops/conquest-update.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','tests/solaris-game.cjs','tests/solaris-conquista.cjs','tests/solaris-map-audio.cjs','vercel.json']:
+          for name in ['site/index.html','site/game','site/conquista','site/assets','.ops/build-solaris.mjs','.ops/game-update.mjs','.ops/conquest-update.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','tests/solaris-game.cjs','tests/solaris-conquista.cjs','tests/solaris-map-audio.cjs','tests/solaris-v22.cjs','vercel.json']:
               src=Path(name);dst=root/src;dst.parent.mkdir(parents=True,exist_ok=True)
               if src.is_dir():shutil.copytree(src,dst)
               else:shutil.copy2(src,dst)
@@ -27,7 +27,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: solaris-v22-review-source
+          name: solaris-phase1-source
           path: review-source/
           include-hidden-files: true
           retention-days: 3
