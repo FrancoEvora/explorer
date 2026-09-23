@@ -63,3 +63,28 @@ dialog{max-height:calc(100dvh - 24px - var(--top) - var(--bottom));max-width:cal
 /* Arrival cards must never intercept the travel/phase action underneath. */
 .visit-toast{top:calc(112px + env(safe-area-inset-top,0px));bottom:auto;pointer-events:none}.visit-toast button{pointer-events:auto}
 @media(max-height:500px){.visit-toast{top:calc(105px + env(safe-area-inset-top,0px));padding:10px 42px 8px 14px}.visit-toast h3{font-size:16px;margin:3px 0}.visit-toast p{font-size:11px}.visit-toast .textbutton{font-size:11px}}
+
+/* v2.2.1: direct touch targets and named, explicit first-phase progress. */
+#missionDialog{touch-action:pan-y;overscroll-behavior:contain}
+#missionDialog button{-webkit-appearance:none;appearance:none;touch-action:manipulation}
+#missionDialog button>*{pointer-events:none}
+#missionDialog .closebutton{position:absolute}
+#missionBoard svg{overflow:visible;pointer-events:none}
+.route-guide{padding:12px;border:1px solid var(--line);border-radius:14px;background:#102a2355;margin-bottom:12px}
+.route-guide>.eyebrow{display:block;font-size:9px;margin-bottom:8px}
+.route-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0;padding:0;list-style:none}
+.route-steps li{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:9px 3px 7px;border:1px solid transparent;border-radius:10px;color:var(--muted);min-width:0}
+.route-steps li.current{border-color:var(--gold);background:#e8d69813;color:var(--ivory)}
+.route-steps li.done{background:var(--gold);color:var(--deep)}
+.route-steps svg{width:23px;height:23px}.route-steps b{font-size:11px;font-weight:550;white-space:nowrap}
+.route-step-no{position:absolute;left:4px;top:2px;font-size:8px;opacity:.65}
+.route-step-state{font-size:7px;font-weight:600;letter-spacing:.04em}
+.route-prompt{margin:10px 0 12px;color:var(--gold);font-size:13px;min-height:20px;line-height:1.45}
+.route-prompt.complete{color:var(--mint)}
+.route-options button{min-height:84px;gap:5px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.route-options button.chosen{background:#46674a;border-color:var(--gold)}
+.route-options button.route-wrong{border-color:#e6a185;background:#663f3533}
+.route-card-state{font-size:7px;font-weight:600;letter-spacing:.04em;color:#d0d9bc}
+#missionDialog button:active{filter:brightness(1.14)}
+@media(max-width:390px){.route-options{gap:8px}.route-options button{min-height:77px}.route-steps b{font-size:10px}}
+@media(max-height:500px) and (orientation:landscape){.route-guide{padding:8px}.route-steps li{padding:5px 2px}.route-options button{min-height:58px}.route-options button svg{width:23px;height:23px}}

@@ -1,0 +1,14 @@
+{
+  "version": "solaris-conquista-v2.2.1",
+  "path": "/jogo/",
+  "nativeTouch": true,
+  "inlineIcons": true,
+  "explicitPhaseOneSteps": true,
+  "allPhasesPassed": true,
+  "musicPreserved": true,
+  "visitRewardsPreserved": true,
+  "saveKey": "solaris-conquista-v2",
+  "hardwareIPhoneTest": false,
+  "qaPassed": true,
+  "qaRun": "https://github.com/FrancoEvora/explorer/actions/runs/35871492814"
+}
