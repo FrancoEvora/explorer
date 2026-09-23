@@ -35,7 +35,6 @@ jobs:
           for name,content in files.items():
               p=Path(name);assert not p.exists(), 'Concurrent file: '+name
               p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content,encoding='utf-8')
-          # Wait for a complete 16-bar loop; travel completion may take less than the 50-second score.
           p=Path('tests/solaris-v22.cjs');s=p.read_text()
           old="assert((await aud(p)).musicTrack.loops>=1,'The score loops while exploring');"
           assert s.count(old)==1
@@ -43,6 +42,7 @@ jobs:
           print('Verified v2.1 baseline and complete v2.2 update bundle.')
           PY
           python3 .ops/apply-v22.py
+          python3 .ops/v22-qa-diagnostics.py
           node .ops/build-solaris.mjs
       - name: Install isolated browser verification
         run: |
@@ -84,6 +84,4 @@ jobs:
           path: |
             qa-v22/
             qa-regression/
-            .ops/v22-source.*.b64
-          include-hidden-files: true
           retention-days: 7
