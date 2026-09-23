@@ -1,7 +1,14 @@
 from pathlib import Path
 score=Path('.ops/v22-buffered-score.js').read_text()
+score=score.replace('const bus=ctx.createGain(),meter=ctx.createAnalyser(),filter=ctx.createBiquadFilter();','const bus=ctx.createGain(),filter=ctx.createBiquadFilter();')
+score=score.replace('filter.connect(bus);bus.connect(meter);meter.fftSize=1024;meter.connect(destination);','filter.connect(bus);bus.connect(destination);')
+a="  let rms=0;if(active&&ctx.state==='running'){const a=new Float32Array(meter.fftSize);meter.getFloatTimeDomainData(a);rms=Math.sqrt(a.reduce((s,n)=>s+n*n,0)/a.length);}\n"
+assert a in score
+score=score.replace(a,'').replace(',rms,voices:source?1:0',',voices:source?1:0')
 Path('site/conquista/music.js').write_text(score)
 Path('.ops/v22-score.js').write_text(score)
+a=Path('site/conquista/audio.js');t=a.read_text();old='function snapshot(){let rms=0;if(analyser';assert old in t;a.write_text(t.replace(old,'function snapshot(measure=true){let rms=0;if(measure&&analyser'))
+a=Path('site/conquista/conquista.js');t=a.read_text();assert 'const a=sound.snapshot();' in t;a.write_text(t.replace('const a=sound.snapshot();','const a=sound.snapshot(false);'))
 r=Path('site/conquista/README.md');r.write_text(r.read_text().replace('It is continuously sequenced on the shared gesture-activated AudioContext.', 'The score is rendered locally once, then played as one continuously looping buffer on the shared gesture-activated AudioContext.'))
 p=Path('tests/solaris-v22.cjs');s=p.read_text()
 s=s.replace('.musicTrack.scheduledNotes','.musicTrack.playedNotes')
@@ -23,5 +30,9 @@ for old,new in [
 a="}catch(e){await shot(p,spec.name+'-FAIL');fs.writeFileSync(path.join(OUT,'failure.json'),JSON.stringify({device:spec.name,error:e.stack,errors},null,2));throw e;}finally{await browser.close();}}"
 b="}catch(e){console.error('ORIGINAL FAILURE',e);fs.writeFileSync(path.join(OUT,'failure.json'),JSON.stringify({device:spec.name,error:e.stack,errors},null,2));try{await shot(p,spec.name+'-FAIL');}catch(se){console.error('Screenshot unavailable:',se.message);}throw e;}finally{await browser.close();}}"
 assert a in s
+s=s.replace(a,b)
+a="await shot(p,spec.name+'-journey');await dismiss(p);"
+b=a+"checkpoint('early-mute');await p.waitForFunction(()=>SolarisSound.snapshot(false).musicTrack?.ready);await p.click('#soundToggle');await p.waitForFunction(()=>SolarisSound.snapshot(false).state==='suspended');checkpoint('early-unmute');await p.click('#soundToggle');await p.waitForFunction(()=>SolarisSound.snapshot(false).state==='running');checkpoint('early-resume-ok');"
+assert a in s
 p.write_text(s.replace(a,b))
-print('Music uses a single loop buffer. QA preserves original failures and audio/navigation checkpoints.')
+print('Single musical source; UI state callbacks never pull audio samples. Full output tests retained.')
