@@ -5,6 +5,9 @@ s=s.replace(a,"ctx.close().catch(()=>{});")
 a="if(ctx&&ctx.state!=='closed')return true;const C="
 b="if(ctx&&ctx.state==='running')return true;if(ctx&&ctx.state!=='closed'){try{ctx.close().catch(()=>{});}catch{}}const C="
 assert a in s
+s=s.replace(a,b)
+a='try{ctx=new C({latencyHint:';b='try{voices.clear();ctx=new C({latencyHint:'
+assert a in s
 p.write_text(s.replace(a,b))
 r=Path('site/conquista/README.md');s=r.read_text();s+='\nFor reliable mobile reactivation, mute and background release the audio context. The next deliberate user gesture recreates it and restarts the score with the same volume preferences. Existing game progress is independent of audio lifecycle.\n';r.write_text(s)
 p=Path('tests/solaris-v22.cjs');s=p.read_text().replace("state==='suspended'","state==='closed'").replace(".state,'suspended'",".state,'closed'")
@@ -15,4 +18,4 @@ assert a in s
 p.write_text(s.replace(a,b))
 p=Path('tests/solaris-map-audio.cjs');s=p.read_text().replace("state==='suspended'","state==='closed'").replace(".state,'suspended'",".state,'closed'")
 p.write_text(s)
-print('Mute/background now release the device; next user gesture creates a fresh context. Same mute, music and waveform checks retained.')
+print('Mute/background release the device; next user gesture creates a fresh context. Same mute, music and waveform checks retained.')
