@@ -1,0 +1,89 @@
+name: Solaris Music and Visit Achievements
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-music-visits-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-v22-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify exact application baseline and reviewed v2.2 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,base64,gzip,json
+          from pathlib import Path
+          expected={'site/conquista/conquista.js':'6a35ae6ad3070c448ae69d690fa0a053e39c07f6a1efa62bc893dcaa0e5eabdd','site/conquista/conquista.css':'a8dcaa5ea90161be481735fecc025b8f98eaeeb51631aec6868d82f02354147b','site/conquista/index.html':'e8f2ab30acd01229cea219e4ce0f12a766d4d16edb8ec940b274d20afdc7e0e5','site/conquista/audio.js':'26435e9bb49e88f18df2f6f30ea2605bb7b244dac835ea21c994c72e6d7c2553','site/conquista/README.md':'8a17dc5f1ad64733a717728de13bb5481e7869cbb80a1c1a36f0375790b4e432','.ops/conquest-update.mjs':'9ec0ef9ea54b3ea74b0d2e100f9c4c391be27648137687b81b9792c4774f31fe'}
+          for name,digest in expected.items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, 'Concurrent source change: '+name
+          parts=[Path(f'.ops/v22-source.{i}.b64').read_text() for i in range(2)]
+          parts[1]=parts[1].replace('TH16fvTH16fv','TH16fv')
+          raw=base64.b64decode(''.join(parts),validate=True)
+          assert hashlib.sha256(raw).hexdigest()=='c75ed3fea8bb4284f6e3899cd49d753a20361e2808c8cfd7a2dddf2ec08e67c7', 'Source transfer integrity failed'
+          files=json.loads(gzip.decompress(raw))
+          assert set(files)=={'.ops/apply-v22.py','.ops/v22-score.js','tests/solaris-v22.cjs'}
+          for name,content in files.items():
+              p=Path(name);assert not p.exists(), 'Concurrent file: '+name
+              p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content,encoding='utf-8')
+          # Wait for a complete 16-bar loop; travel completion may take less than the 50-second score.
+          p=Path('tests/solaris-v22.cjs');s=p.read_text()
+          old="assert((await aud(p)).musicTrack.loops>=1,'The score loops while exploring');"
+          assert s.count(old)==1
+          p.write_text(s.replace(old,"await p.waitForFunction(()=>SolarisSound.snapshot().musicTrack.loops>=1,null,{timeout:60000});"+old))
+          print('Verified v2.1 baseline and complete v2.2 update bundle.')
+          PY
+          python3 .ops/apply-v22.py
+          node .ops/build-solaris.mjs
+      - name: Install isolated browser verification
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-v22-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-v22-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify all visits, unique rewards, actual music, full loop and save migration
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-v22-qa/node_modules
+          QA_V22_OUTPUT: qa-v22
+        run: node tests/solaris-v22.cjs
+      - name: Verify all 15 phases, prizes, saves and original map still work
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-v22-qa/node_modules
+          QA_OUTPUT: qa-regression
+        run: node tests/solaris-conquista.cjs
+      - name: Publish only the verified application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,os
+          for name in ['qa-v22/report.json','qa-regression/report.json']:
+              data=json.loads(Path(name).read_text())
+              assert data['passed'] and all(r['passed'] for r in data['reports'])
+          status={'version':'solaris-conquista-v2.2','path':'/jogo/','music':'Caminhos de Sol','musicLoop':True,'firstVisitXP':20,'firstVisitSuns':15,'places':9,'collectionBonusXP':100,'collectionBonusSuns':100,'duplicateVisitRewards':False,'physicalPrizes':False,'saveKey':'solaris-conquista-v2','qaPassed':True,'qaRun':'https://github.com/FrancoEvora/explorer/actions/runs/'+os.environ['GITHUB_RUN_ID']}
+          Path('.ops/music-visits-release-status.json').write_text(json.dumps(status,ensure_ascii=False,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/audio.js site/conquista/music.js site/conquista/README.md .ops/conquest-update.mjs .ops/apply-v22.py .ops/v22-score.js .ops/music-visits-release-status.json tests/solaris-v22.cjs
+          git commit -m 'feat(solaris): publish original music and nine first-visit achievements after WebKit QA'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-v22/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-v22-qa
+          path: |
+            qa-v22/
+            qa-regression/
+            .ops/v22-source.*.b64
+          include-hidden-files: true
+          retention-days: 7
