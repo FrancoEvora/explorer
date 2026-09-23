@@ -2,7 +2,7 @@ name: Solaris Phase One Touch Release
 on:
   push:
     branches: [solaris-imersivo-mobile]
-    paths: ['.github/workflows/solaris-phase1-touch-release.yml']
+    paths: ['.github/workflows/solaris-phase1-touch-release.yml', '.ops/phase1-qa-diagnostics.py']
   workflow_dispatch:
 permissions:
   contents: write
