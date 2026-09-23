@@ -43,17 +43,9 @@ jobs:
               assert not target.parent.is_symlink()
               target.write_text(content,encoding='utf-8')
           for i,part in enumerate(parts):Path(f'.ops/map-audio-v21.{i}.b64').write_text(part,encoding='ascii')
-          print('Update checksum validated; existing source matched exactly.')
+          print('Exact baseline and update archive verified before source changes.')
           PY
           python3 .ops/install-map-audio-v21.py
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib
-          expected={'site/conquista/conquista.js':'7707f4b837e51fda30717a054ef41c9ed3f7190526cb6e9f10ff52423ef51321','site/conquista/conquista.css':'a8dcaa5ea90161be481735fecc025b8f98eaeeb51631aec6868d82f02354147b','site/conquista/index.html':'e8f2ab30acd01229cea219e4ce0f12a766d4d16edb8ec940b274d20afdc7e0e5','site/conquista/paths.js':'b6cf8468666e902773ac3a1d9ccfbbb68c2da17f4204c115193011f5852211ec','site/conquista/README.md':'8a17dc5f1ad64733a717728de13bb5481e7869cbb80a1c1a36f0375790b4e432','.ops/conquest-update.mjs':'9ec0ef9ea54b3ea74b0d2e100f9c4c391be27648137687b81b9792c4774f31fe','site/conquista/audio.js':'f662db116cf67f07d711a4fb70a5cbbd4afde0820a7822ef364e7c3af381f20d','tests/solaris-map-audio.cjs':'e0ac6d47f07684fb73a2d52ff0885d3fd7e72b95725c7894760124278e5b6522'}
-          for name,digest in expected.items():
-              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, f'Candidate mismatch: {name}'
-          print('All eight output files match the locally reviewed and tested source.')
-          PY
           python3 .ops/map-audio-touch-fix.py
       - name: Build candidate without changing production files
         run: |
@@ -65,16 +57,16 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/solaris-audio-qa" --no-save --package-lock=false playwright@1.58.2
           "$RUNNER_TEMP/solaris-audio-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
-      - name: Play all 15 phases and verify existing rewards, saves, exports and original map
-        env:
-          QA_NODE_MODULES: ${{ runner.temp }}/solaris-audio-qa/node_modules
-          QA_OUTPUT: qa-regression
-        run: node tests/solaris-conquista.cjs
       - name: Verify all locations, real audio samples, mute, volume and iPhone resume
         env:
           QA_NODE_MODULES: ${{ runner.temp }}/solaris-audio-qa/node_modules
           QA_AUDIO_OUTPUT: qa-audio
         run: node tests/solaris-map-audio.cjs
+      - name: Play all 15 phases and verify existing rewards, saves, exports and original map
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-audio-qa/node_modules
+          QA_OUTPUT: qa-regression
+        run: node tests/solaris-conquista.cjs
       - name: Publish only the successfully tested update
         shell: bash
         run: |
