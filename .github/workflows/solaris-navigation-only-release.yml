@@ -1,0 +1,163 @@
+name: Solaris Navigation Only Release
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-navigation-only-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-navigation-only-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Remove games from public build and redirect retired routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          expected={'.ops/build-solaris.mjs':'6d15849d6a3d337f2a1e32364fa6ea8c16b86ee4','vercel.json':'33561b812b2ac134a29da8ba0184ac1446c6ffbe','site/index.html':'4c9102e781437af09d146f5a381fc702e0a41c3c','.ops/all-labels-update.mjs':'2685eead07d982a07baeba5b89a5046680f012ff','.ops/location-update.mjs':'0e9f7fd722c09c4e9ed12cc94bf7b2a79c42c2d5'}
+          for name,digest in expected.items():
+              raw=Path(name).read_bytes()
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==digest,'Concurrent change: '+name
+          p=Path('.ops/build-solaris.mjs');s=p.read_text()
+          s=s.replace("import { applyAllLabelsUpdate, VERSION } from './all-labels-update.mjs';", "import { applyAllLabelsUpdate, VERSION } from './all-labels-update.mjs';\n\nconst NAVIGATION_VERSION = '2026-09-23-navigation-only-v5';")
+          start=s.index('// Optional 2D day-game,')
+          s=s[:start]+"// Navigation only: the game installers intentionally do not run.\n// Historical game sources and local visitor saves are not modified or published.\nconst publicFiles = fs.readdirSync(out, { recursive: true }).filter(name => fs.statSync(path.join(out, name)).isFile()).sort();\nconst allowedFiles = ['assets/masterplan.jpg', 'assets/masterplan.webp', 'index.html', 'manifest.webmanifest', 'sw.js', 'version.json'];\nif (JSON.stringify(publicFiles) !== JSON.stringify(allowedFiles)) throw new Error('Unexpected file in the navigation-only release.');\nconsole.log(`Solaris ${NAVIGATION_VERSION}: navigation only, no game runtime or game assets published.`);\n"
+          s=s.replace("for (const script of html.matchAll", "if (/installGame|installConquest|SolarisQuest|AudioContext|missionDialog|welcomeForm|href=[\"'][^\"']*(?:jogo|passeio)\\//i.test(html)) {\n  throw new Error('Unexpected game or audio entry in the navigation-only page.');\n}\nhtml = html.replaceAll(VERSION, NAVIGATION_VERSION);\nfor (const script of html.matchAll",1)
+          s=s.replace('  version: VERSION,','  version: NAVIGATION_VERSION,\n  labelVersion: VERSION,\n  gameEnabled: false,\n  musicEnabled: false,\n  navigationOnly: true,\n  retiredGameRoutes: [\'/jogo\', \'/passeio\'],')
+          s=s.replace("  qaRun: 'https://github.com/FrancoEvora/explorer/actions/runs/35799533746'", "  labelsQaRun: 'https://github.com/FrancoEvora/explorer/actions/runs/35799533746'")
+          p.write_text(s)
+          p=Path('vercel.json');c=json.loads(p.read_text());assert 'redirects' not in c
+          c['redirects']=[{'source':s,'destination':'/','permanent':False} for s in ['/jogo','/jogo/:path*','/passeio','/passeio/:path*']]
+          c['headers'].append({'source':'/version.json','headers':[{'key':'Cache-Control','value':'no-cache'}]})
+          p.write_text(json.dumps(c,ensure_ascii=False,indent=2)+'\n')
+          print('Only public build and retired game routes changed. Image, named locations and gate remain unchanged.')
+          PY
+          node .ops/build-solaris.mjs
+      - name: Install isolated mobile and desktop browser verification
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-nav-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-nav-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify nine named locations, zoom, pan, guided tour and game removal
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-nav-qa/node_modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-navigation
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import http from 'node:http';
+          import assert from 'node:assert/strict';
+          import {pathToFileURL} from 'node:url';
+          const {webkit,chromium}=await import(pathToFileURL(path.join(process.env.QA_NODE_MODULES,'playwright/index.mjs')));
+          const root=path.resolve('solaris-dist'),out=path.resolve('qa-navigation');
+          const version=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8'));
+          assert.equal(version.version,'2026-09-23-navigation-only-v5');assert.equal(version.gameEnabled,false);assert.equal(version.namedPointCount,9);
+          const config=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+          assert.deepEqual(config.redirects.map(r=>r.source),['/jogo','/jogo/:path*','/passeio','/passeio/:path*']);
+          for(const r of config.redirects){assert.equal(r.destination,'/');assert.equal(r.permanent,false);}
+          for(const type of ['jpg','webp'])assert(fs.readFileSync('site/assets/masterplan.'+type).equals(fs.readFileSync(path.join(root,'assets/masterplan.'+type))));
+          const server=http.createServer((req,res)=>{
+            const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+            if(p==='/jogo'||p.startsWith('/jogo/')||p==='/passeio'||p.startsWith('/passeio/')){res.writeHead(307,{Location:'/'});res.end();return;}
+            const file=path.resolve(root,'.'+(p==='/'?'/index.html':p));
+            if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
+            res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.json':'application/json','.webp':'image/webp','.jpg':'image/jpeg','.js':'application/javascript','.webmanifest':'application/manifest+json'})[path.extname(file)]||'application/octet-stream');
+            res.end(fs.readFileSync(file));
+          });
+          await new Promise(r=>server.listen(0,'127.0.0.1',r));
+          const base='http://127.0.0.1:'+server.address().port,reports=[];
+          const specs=[{name:'iphone-webkit-portrait',engine:webkit,width:430,height:850,touch:true},{name:'iphone-webkit-landscape',engine:webkit,width:850,height:430,touch:true},{name:'desktop-chromium',engine:chromium,width:1440,height:1000,touch:false}];
+          try{
+            for(const spec of specs){
+              const browser=await spec.engine.launch({headless:true});
+              const context=await browser.newContext({viewport:{width:spec.width,height:spec.height},isMobile:spec.touch,hasTouch:spec.touch,deviceScaleFactor:1,reducedMotion:'reduce'});
+              const page=await context.newPage(),errors=[],requests=[];
+              page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));page.setDefaultTimeout(10000);
+              const tap=async selector=>{const el=page.locator(selector);await el.waitFor({state:'visible'});if(spec.touch){await el.scrollIntoViewIfNeeded();const box=await el.boundingBox();assert(box);await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);}else await el.click();};
+              try{
+                await page.goto(base,{waitUntil:'networkidle'});
+                await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('ready')&&document.querySelector('#app').dataset.visibleLabels==='9');
+                assert.equal(await page.locator('.map-label:visible').count(),9);
+                assert.equal(await page.locator('.scene').count(),10);
+                assert.equal(await page.locator('#portaria-implantacao').count(),1);
+                assert.equal(await page.locator('audio,canvas,#missionDialog,#welcome,#gameLink,#soundToggle').count(),0);
+                assert.equal(await page.locator('a[href*="jogo"],a[href*="passeio"]').count(),0);
+                assert(!(await page.locator('body').innerText()).match(/Jogar|Passaporte|Sóis|Conquiste/));
+                await page.screenshot({path:path.join(out,spec.name+'.png')});
+                const places=await page.locator('.map-label').evaluateAll(els=>els.map(e=>({id:e.dataset.target,name:e.textContent})));
+                for(const place of places){
+                  await tap('#home');await page.waitForTimeout(100);
+                  await tap('#label-'+place.id);
+                  await page.waitForFunction(name=>document.querySelector('#detailTitle').textContent===name,place.name);
+                  assert.equal(await page.locator('#detail').isVisible(),true);
+                }
+                await tap('#home');await page.waitForTimeout(100);
+                const before=await page.locator('#zoomValue').innerText();await tap('#zoomIn');
+                assert.notEqual(await page.locator('#zoomValue').innerText(),before);
+                await tap('#zoomIn');await page.waitForTimeout(100);
+                const transform=await page.locator('#plane').getAttribute('style');
+                const stage=await page.locator('#stage').boundingBox();
+                if(spec.touch){
+                  await page.locator('#stage').dispatchEvent('pointerdown',{pointerId:41,pointerType:'touch',isPrimary:true,clientX:stage.x+stage.width/2,clientY:stage.y+stage.height/2});
+                  await page.locator('#stage').dispatchEvent('pointermove',{pointerId:41,pointerType:'touch',isPrimary:true,clientX:stage.x+stage.width/2+40,clientY:stage.y+stage.height/2+20});
+                  await page.locator('#stage').dispatchEvent('pointerup',{pointerId:41,pointerType:'touch',isPrimary:true,clientX:stage.x+stage.width/2+40,clientY:stage.y+stage.height/2+20});
+                }else{
+                  await page.mouse.move(stage.x+stage.width/2,stage.y+stage.height/2);await page.mouse.down();await page.mouse.move(stage.x+stage.width/2+40,stage.y+stage.height/2+20,{steps:5});await page.mouse.up();
+                }
+                assert.notEqual(await page.locator('#plane').getAttribute('style'),transform);
+                await tap('#home');await tap('#tour');assert.equal(await page.locator('#tour').getAttribute('aria-pressed'),'true');
+                await page.waitForTimeout(200);await tap('#tour');assert.equal(await page.locator('#tour').getAttribute('aria-pressed'),'false');
+                await tap('#clean');assert((await page.locator('#app').getAttribute('class')).includes('clean'));
+                await tap('#exitClean');assert(!(await page.locator('#app').getAttribute('class')).includes('clean'));
+                await tap('#help');assert(await page.locator('#helpDialog').isVisible());await tap('#closeHelp');
+                assert(!requests.some(r=>/\/(jogo|passeio)\//.test(r)));
+                for(const route of ['/jogo','/jogo/','/jogo/index.html?v=old','/passeio/']){
+                  const r=await context.request.get(base+route,{maxRedirects:0});assert.equal(r.status(),307);assert.equal(r.headers().location,'/');
+                }
+                await page.goto(base+'/jogo/?v=old');assert.equal(new URL(page.url()).pathname,'/');
+                await page.waitForFunction(()=>document.querySelector('#stage').classList.contains('ready'));
+                assert.deepEqual(errors,[]);
+                reports.push({device:spec.name,passed:true,places:9,gameAbsent:true,errors});console.log('PASS '+spec.name);
+              }catch(e){console.error(e);fs.writeFileSync(path.join(out,'failure.json'),JSON.stringify({device:spec.name,error:e.stack,errors},null,2));try{await page.screenshot({path:path.join(out,spec.name+'-FAIL.png'),timeout:3000});}catch{}throw e;}
+              finally{await browser.close();}
+            }
+            fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({passed:true,version:version.version,reports,hardwareIPhoneTest:false},null,2));
+          }finally{await new Promise(r=>server.close(r));}
+          JS
+      - name: Publish only verified navigation changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          report=json.loads(Path('qa-navigation/report.json').read_text())
+          assert report['passed'] and len(report['reports'])==3 and all(r['passed'] for r in report['reports'])
+          status={'version':'2026-09-23-navigation-only-v5','navigationOnly':True,'gameEnabled':False,'gameAssetsPublished':False,'musicEnabled':False,'namedLocations':9,'masterplanPreserved':True,'gatePreserved':True,'guidedTourPreserved':True,'retiredRoutes':['/jogo','/passeio'],'redirectTo':'/','qaPassed':True,'hardwareIPhoneTest':False,'qaRun':'https://github.com/FrancoEvora/explorer/actions/runs/'+os.environ['GITHUB_RUN_ID']}
+          Path('.ops/navigation-only-release-status.json').write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git fetch origin solaris-imersivo-mobile
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/solaris-imersivo-mobile)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .ops/build-solaris.mjs vercel.json .ops/navigation-only-release-status.json
+          git commit -m 'feat(solaris): remove games and publish navigation-only masterplan'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-navigation/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-navigation-only-qa
+          path: qa-navigation/
+          retention-days: 7
