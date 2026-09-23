@@ -2,7 +2,7 @@ name: Solaris Music and Visit Achievements
 on:
   push:
     branches: [solaris-imersivo-mobile]
-    paths: ['.github/workflows/solaris-music-visits-release.yml']
+    paths: ['.github/workflows/solaris-music-visits-release.yml', '.ops/v22-qa-diagnostics.py']
   workflow_dispatch:
 permissions:
   contents: write
