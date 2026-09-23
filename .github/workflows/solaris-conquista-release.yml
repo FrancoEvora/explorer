@@ -1,0 +1,93 @@
+name: Solaris Explore e Conquiste Release
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-conquista-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-conquista-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify reviewed source and protect existing production map
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .ops/build-solaris.mjs)" = '3794ccd93619a637e506978ceda348656ac48d7b'
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, hashlib, json, lzma
+          expected_parts=['9d13f6069d57b50978b834f42240a85cbf5e25e6','7a90e49b932818b9743d3e4668723c29d049f8d2','7427e9c98fd3abc0a6a31eeeb2c693b667edef69','17113dbfa4417926e5ce8b608f1540fc6f2d4e76','5832aa94284063c256833b9931ac459a22c853fc','e828395f41b0f73a11e461ccfa09fb8aa0727084','51d8cdab2bed93ea537a69b165125d4a3963f4eb']
+          parts=[]
+          for i, expected in enumerate(expected_parts):
+              part=Path(f'.ops/conquista-source-v2.{i}.b64').read_bytes()
+              digest=hashlib.sha1(f'blob {len(part)}\0'.encode()+part).hexdigest()
+              assert digest==expected, f'Transfer integrity failed for part {i}: {digest}'
+              parts.append(part)
+          raw=base64.b64decode(b''.join(parts),validate=True)
+          assert len(raw)==40640
+          assert hashlib.sha256(raw).hexdigest()=='be78b439c78ae90e49ec49f85c6a1a4c224db4ddaae40f9fafbb14c9567a885a'
+          decoded=lzma.decompress(raw)
+          assert len(decoded)==143511
+          files=json.loads(decoded)
+          allowed={'site/conquista/index.html','site/conquista/conquista.css','site/conquista/conquista.js','site/conquista/paths.js','site/conquista/README.md','.ops/conquest-update.mjs','tests/solaris-conquista.cjs'}
+          assert set(files)==allowed
+          for name,content in files.items():
+              target=Path(name)
+              assert not target.exists(), f'Concurrent file exists: {name}'
+              assert isinstance(content,str) and len(content)<100000
+              target.parent.mkdir(parents=True,exist_ok=True)
+              assert not target.parent.is_symlink()
+              target.write_text(content,encoding='utf-8')
+          print('Seven reviewed source files verified. No existing application file overwritten.')
+          PY
+      - name: Build candidate beside preserved image-only viewer and original game
+        run: |
+          node .ops/build-solaris.mjs
+          node --input-type=module -e "import {installConquest} from './.ops/conquest-update.mjs'; installConquest();"
+          node --check site/conquista/conquista.js
+          node --check site/conquista/paths.js
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-conquista-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-conquista-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Play 15 phases and verify rewards, persistence, refuge, exports and legacy map
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-conquista-qa/node_modules
+          QA_OUTPUT: qa-conquista
+        run: node tests/solaris-conquista.cjs
+      - name: Enable only the successfully tested release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .ops/build-solaris.mjs)" = '3794ccd93619a637e506978ceda348656ac48d7b'
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,os
+          report=json.loads(Path('qa-conquista/report.json').read_text())
+          assert report['passed'] is True and len(report['reports'])==5
+          p=Path('.ops/build-solaris.mjs');s=p.read_text()
+          assert "import('./conquest-update.mjs')" not in s
+          p.write_text(s+"\n// Explore e Conquiste: virtual-only progression, verified through all 15 phases.\nawait import('./conquest-update.mjs').then(m => m.installConquest());\n")
+          Path('.ops/conquista-release-status.json').write_text(json.dumps({'version':'solaris-conquista-v2','path':'/jogo/','legacyPath':'/passeio/','phases':15,'chapters':5,'maximumStars':45,'physicalPrizes':False,'serverValidated':False,'qaPassed':True,'qaRun':'https://github.com/FrancoEvora/explorer/actions/runs/'+os.environ['GITHUB_RUN_ID']},ensure_ascii=False,indent=2))
+          PY
+          node .ops/build-solaris.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/conquista .ops/conquest-update.mjs .ops/build-solaris.mjs .ops/conquista-release-status.json tests/solaris-conquista.cjs
+          git commit -m 'feat(solaris): publish Explore e Conquiste with 15 phases and virtual rewards after WebKit QA'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-conquista/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-conquista-qa
+          path: qa-conquista/
+          retention-days: 7
