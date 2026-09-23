@@ -19,10 +19,11 @@ jobs:
       - name: Build only the reviewed touch and icon candidate
         run: |
           python3 .ops/phase1-fix.py
+          python3 .ops/phase1-qa-diagnostics.py
           python3 - <<'PY'
           from pathlib import Path
           import hashlib
-          expected={'site/conquista/conquista.js':'402ee01c69fa84cb316e6e8af992444f7d7245f6ed020e0c1d150b2daaaeb831','site/conquista/conquista.css':'ee94a1ad063fe35b41f1af6dcc1e3234a7ca3201655630fa70a210167d53d6d2','site/conquista/index.html':'299af4c74e12741be6b0e0d6a66b1ed76a55491c6616a146bbe142cce92b7170','site/conquista/input.js':'0f36c82a9ed796b7ec0451a11a8de80b8b0689ea37cc205a87016e44e940882d','site/conquista/README.md':'dec27b8da0520f00a1ff9ac796b2f8e59e53bf77924fbfd964b71993d49fb132','.ops/conquest-update.mjs':'720f64b09aeeddcb42c7beedb2fd5361bcf87432c7510ce3032fb5b26ea0dbdb'}
+          expected={'site/conquista/conquista.js':'402ee01c69fa84cb316e6e8af992444f7d7245f6ed020e0c1d150b2daaaeb831','site/conquista/conquista.css':'ee94a1ad063fe35b41f1af6dcc1e3234a7ca3201655630fa70a210167d53d6d2','site/conquista/index.html':'299af4c74e12741be6b0e0d6a66b1ed76a55491c6616a146bbe142cce92b7170','site/conquista/input.js':'8ef2c316b3fd70d55ec8ed8f35e525589d784d932c2ddaff7716d729c3bb71cd','site/conquista/README.md':'dec27b8da0520f00a1ff9ac796b2f8e59e53bf77924fbfd964b71993d49fb132','.ops/conquest-update.mjs':'720f64b09aeeddcb42c7beedb2fd5361bcf87432c7510ce3032fb5b26ea0dbdb'}
           for name,digest in expected.items():
               assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, 'Candidate differs from reviewed source: '+name
           PY
@@ -61,7 +62,7 @@ jobs:
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/input.js site/conquista/README.md .ops/conquest-update.mjs .ops/phase1-touch-release-status.json
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/input.js site/conquista/README.md .ops/conquest-update.mjs .ops/phase1-touch-release-status.json tests/solaris-touch-phase1.cjs
           git commit -m 'fix(solaris): publish native touch phase controls and clear first-route progression'
           git push origin HEAD:solaris-imersivo-mobile
           git rev-parse HEAD > qa-touch/released-commit.txt
