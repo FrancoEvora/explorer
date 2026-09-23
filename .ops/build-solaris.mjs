@@ -47,3 +47,6 @@ fs.writeFileSync(path.join(out, 'version.json'), JSON.stringify({
   qaRun: 'https://github.com/FrancoEvora/explorer/actions/runs/35799533746'
 }));
 console.log(`Solaris ${VERSION}: ${SCENES.length-1} permanently named points, collision-aware mobile labels, original image and gate preserved. All assets are local.`);
+
+// Optional 2D day-game, verified in mobile WebKit and desktop Chromium.
+await import('./game-update.mjs').then(m => m.installGame());
