@@ -2,18 +2,18 @@ name: Solaris Music and Visit Achievements
 on:
   push:
     branches: [solaris-imersivo-mobile]
-    paths: ['.github/workflows/solaris-music-visits-release.yml', '.ops/v22-qa-diagnostics.py']
+    paths: ['.github/workflows/solaris-music-visits-release.yml', '.ops/v22-qa-diagnostics.py', '.ops/v22-reopen-audio.py']
   workflow_dispatch:
 permissions:
   contents: write
 concurrency:
   group: solaris-v22-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   verify-and-release:
     if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Verify exact application baseline and reviewed v2.2 source
@@ -43,6 +43,7 @@ jobs:
           PY
           python3 .ops/apply-v22.py
           python3 .ops/v22-qa-diagnostics.py
+          python3 .ops/v22-reopen-audio.py
           node .ops/build-solaris.mjs
       - name: Install isolated browser verification
         run: |
@@ -73,7 +74,7 @@ jobs:
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/audio.js site/conquista/music.js site/conquista/README.md .ops/conquest-update.mjs .ops/apply-v22.py .ops/v22-score.js .ops/music-visits-release-status.json tests/solaris-v22.cjs
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/audio.js site/conquista/music.js site/conquista/README.md .ops/conquest-update.mjs .ops/apply-v22.py .ops/v22-score.js .ops/music-visits-release-status.json tests/solaris-v22.cjs tests/solaris-map-audio.cjs
           git commit -m 'feat(solaris): publish original music and nine first-visit achievements after WebKit QA'
           git push origin HEAD:solaris-imersivo-mobile
           git rev-parse HEAD > qa-v22/released-commit.txt
