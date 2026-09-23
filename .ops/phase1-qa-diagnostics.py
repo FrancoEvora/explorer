@@ -1,5 +1,13 @@
 from pathlib import Path
 p=Path('tests/solaris-touch-phase1.cjs');s=p.read_text()
+# WebKit emulation can report maxTouchPoints=0 despite hasTouch=true.
+# Always use the actual touchscreen API for explicitly declared mobile test devices.
+a="if(await p.evaluate(()=>navigator.maxTouchPoints>0))await p.touchscreen.tap(at.x,at.y);"
+b="if(p.__touchSpec)await p.touchscreen.tap(at.x,at.y);"
+assert s.count(a)==1;s=s.replace(a,b)
+a="const p=await ctx.newPage();let errors=[];"
+b="const p=await ctx.newPage();p.__touchSpec=s.touch;let errors=[];"
+assert s.count(a)==1;s=s.replace(a,b)
 a=" await rejectedGestures(p);"
 b=""" await p.evaluate(()=>{window.__inputTrace=[];for(const type of ['pointerdown','pointerup','pointercancel','touchstart','touchend','touchcancel','click'])document.addEventListener(type,e=>{if(window.__inputTrace.length>100)window.__inputTrace.shift();window.__inputTrace.push({type,target:e.target.closest?.('button')?.outerHTML.slice(0,180),trusted:e.isTrusted,detail:e.detail,pointerType:e.pointerType,isPrimary:e.isPrimary,touches:e.touches?.length,defaultPrevented:e.defaultPrevented});},true);});
  await rejectedGestures(p);
