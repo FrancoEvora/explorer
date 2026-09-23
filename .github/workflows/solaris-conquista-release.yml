@@ -48,6 +48,7 @@ jobs:
               target.write_text(content,encoding='utf-8')
           print('Seven reviewed source files verified. No existing application file overwritten.')
           PY
+          node .ops/conquista-qa-selector-update.mjs
       - name: Build candidate beside preserved image-only viewer and original game
         run: |
           node .ops/build-solaris.mjs
