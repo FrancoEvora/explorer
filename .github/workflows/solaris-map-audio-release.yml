@@ -28,7 +28,6 @@ jobs:
               data=Path(name).read_bytes()
               assert hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()==expected, f'Concurrent change: {name}'
           parts=[Path(f'.ops/map-audio-v21.{i}.b64').read_text() for i in range(3)]
-          # Correct verified text-transport insertions; the complete archive checksum remains mandatory.
           parts[0]=parts[0].replace('LOh6leKK/w1','LOh6leK/w1').replace('ZnkdCC766','ZnkdC766').replace('CAXPdUwScuVJJqQ','CAXPdUwScuVJqQ')
           parts[1]=parts[1].replace('Npts8RubLX','Npts8buLX')
           raw=base64.b64decode(''.join(parts),validate=True)
@@ -55,6 +54,7 @@ jobs:
               assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, f'Candidate mismatch: {name}'
           print('All eight output files match the locally reviewed and tested source.')
           PY
+          python3 .ops/map-audio-touch-fix.py
       - name: Build candidate without changing production files
         run: |
           node .ops/build-solaris.mjs
@@ -89,7 +89,7 @@ jobs:
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/paths.js site/conquista/README.md site/conquista/audio.js .ops/conquest-update.mjs .ops/install-map-audio-v21.py .ops/map-audio-release-status.json .ops/map-audio-v21.0.b64 .ops/map-audio-v21.1.b64 .ops/map-audio-v21.2.b64 tests/solaris-map-audio.cjs
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/paths.js site/conquista/README.md site/conquista/audio.js .ops/conquest-update.mjs .ops/install-map-audio-v21.py .ops/map-audio-release-status.json .ops/map-audio-v21.0.b64 .ops/map-audio-v21.1.b64 .ops/map-audio-v21.2.b64 tests/solaris-map-audio.cjs tests/solaris-conquista.cjs
           git commit -m 'feat(solaris): publish all nine places and interactive sound after WebKit and Chromium verification'
           git push origin HEAD:solaris-imersivo-mobile
           git rev-parse HEAD > qa-audio/released-commit.txt
