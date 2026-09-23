@@ -2,6 +2,7 @@
 (()=>{'use strict';
 const dialog=document.getElementById('missionDialog');
 if(!dialog)return;
+const nativeTouch='ontouchstart' in window;
 let press=null,blocked=null,forwarding=false,touchActivations=0,suppressedClicks=0;
 const buttonAt=target=>target instanceof Element?target.closest('button'):null;
 const usable=b=>b&&dialog.contains(b)&&!b.disabled&&dialog.open&&!b.closest('[inert]');
@@ -24,10 +25,15 @@ function end(e){
  try{touchActivations++;p.b.click();}finally{forwarding=false;}
 }
 function cancel(e){if(press&&e.pointerId===press.id)press=null;}
-dialog.addEventListener('pointerdown',begin,true);
-dialog.addEventListener('pointermove',move,true);
-dialog.addEventListener('pointerup',end,true);
-dialog.addEventListener('pointercancel',cancel,true);
+// Use one touch path, never parallel touch + pointer handlers for the same finger.
+for(const [name,fn]of [['pointerdown',begin],['pointermove',move],['pointerup',end],['pointercancel',cancel]])dialog.addEventListener(name,e=>{if(!(nativeTouch&&e.pointerType==='touch'))fn(e);},true);
+if(nativeTouch){
+ const normalized=(e,t)=>({target:e.target,pointerType:'touch',pointerId:t.identifier,isPrimary:true,clientX:t.clientX,clientY:t.clientY,cancelable:e.cancelable,preventDefault:()=>e.preventDefault()});
+ dialog.addEventListener('touchstart',e=>{if(e.touches.length!==1){press=null;return;}begin(normalized(e,e.touches[0]));},{capture:true,passive:true});
+ dialog.addEventListener('touchmove',e=>{for(const t of e.changedTouches)move(normalized(e,t));},{capture:true,passive:true});
+ dialog.addEventListener('touchend',e=>{for(const t of e.changedTouches)end(normalized(e,t));},{capture:true,passive:false});
+ dialog.addEventListener('touchcancel',e=>{for(const t of e.changedTouches)cancel(normalized(e,t));},{capture:true,passive:true});
+}
 document.addEventListener('pointerdown',()=>{blocked=null;},true);
 document.addEventListener('click',e=>{
  const b=buttonAt(e.target);
@@ -40,5 +46,5 @@ document.addEventListener('click',e=>{
 dialog.addEventListener('close',()=>{press=null;});
 window.addEventListener('blur',()=>{press=null;});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)press=null;});
-window.SolarisInput=Object.freeze({snapshot:()=>({touchActivations,suppressedClicks})});
+window.SolarisInput=Object.freeze({snapshot:()=>({touchActivations,suppressedClicks,path:nativeTouch?'touchend':'pointerup'})});
 })();
