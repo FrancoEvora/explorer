@@ -43,6 +43,7 @@ jobs:
           Path('.ops/game-source-v1.2.b64').write_text(parts[2], encoding='ascii')
           print('Verified six source files against the locally tested bundle.')
           PY
+          node .ops/game-qa-pan-update.mjs
       - name: Build candidate alongside the unchanged labelled map
         run: |
           node .ops/build-solaris.mjs
