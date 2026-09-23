@@ -1,0 +1,16 @@
+{
+  "version": "solaris-conquista-v2.2",
+  "path": "/jogo/",
+  "music": "Caminhos de Sol",
+  "musicLoop": true,
+  "firstVisitXP": 20,
+  "firstVisitSuns": 15,
+  "places": 9,
+  "collectionBonusXP": 100,
+  "collectionBonusSuns": 100,
+  "duplicateVisitRewards": false,
+  "physicalPrizes": false,
+  "saveKey": "solaris-conquista-v2",
+  "qaPassed": true,
+  "qaRun": "https://github.com/FrancoEvora/explorer/actions/runs/35865135767"
+}
