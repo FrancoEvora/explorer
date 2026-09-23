@@ -1,0 +1,32 @@
+name: Solaris Conquista Source
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-conquista-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Package application files only, no credentials or unrelated projects
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          root=Path('review-source');root.mkdir()
+          for name in ['site/index.html','site/game','site/assets','.ops/build-solaris.mjs','.ops/game-update.mjs','.ops/location-update.mjs','.ops/all-labels-update.mjs','tests/solaris-game.cjs','vercel.json']:
+              src=Path(name);dst=root/src;dst.parent.mkdir(parents=True,exist_ok=True)
+              if src.is_dir():shutil.copytree(src,dst)
+              else:shutil.copy2(src,dst)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: solaris-conquista-source
+          path: review-source/
+          include-hidden-files: true
+          retention-days: 3
