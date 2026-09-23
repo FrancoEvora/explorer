@@ -1,0 +1,12 @@
+{
+  "version": "solaris-conquista-v2.1",
+  "path": "/jogo/",
+  "places": 9,
+  "freeExploration": true,
+  "sequentialChallengesPreserved": true,
+  "audio": "Web Audio synthesis with user activation",
+  "volumeControls": true,
+  "saveKeyPreserved": "solaris-conquista-v2",
+  "qaPassed": true,
+  "qaRun": "https://github.com/FrancoEvora/explorer/actions/runs/35850109234"
+}

@@ -21,3 +21,13 @@ The approximate road network is retained from the reviewed image game. The under
 
 ## Verification
 `tests/solaris-conquista.cjs` plays every phase in mobile WebKit and desktop Chromium, plus compact/landscape smoke tests. It verifies progress, replay rewards, chapter claims, item purchase, unique garden placement, transport, exports, save restoration, invalid imports, the original viewer and game, image failures and blocked storage.
+
+
+## v2.1 — places and interactive sound
+All nine places from the labelled masterplan are now available to inspect and visit from the beginning. Clube e Piscinas, Acesso principal and Parque das Árvores were added to the game. The place list remains accessible even when a marker is outside the zoomed viewport. Markers no longer disappear when the character approaches them. Labels have collision-aware layout and leader lines; the location cards show a thumbnail, description, travel action and available or locked activities with a clear prerequisite. Phase locks, 15 phases, 45 stars and reward rules are unchanged.
+
+The original graph's node indices are preserved. Additional approximate routes connect the previously missing places. Gate, courts and equestrian labels agree with the existing masterplan. This is still an illustration, not a surveyed route.
+
+The optional local Web Audio system starts only from a user gesture, including the explicit 'Jogar com som' start option. It includes wind, water and synthetic bird-like ambience, footsteps/hoofbeats, route feedback, memory-pair and sequence tones, camera clicks, sports hits, item placement, arrival and reward sounds. Three volume controls independently set master, effects and ambient sound. Mute and preference persistence are provided. Backgrounding suspends sound; the next deliberate interaction can recover interrupted audio. No audio files, third-party network calls, microphone or camera permissions are used. Activities retain all visual instructions and remain playable with sound disabled or unavailable.
+
+The existing v2 progress key is retained; no stars, virtual Sóis, outfits or purchases are reset. Audio preferences use a separate key. `tests/solaris-map-audio.cjs` verifies all nine places, travel reachability, label hit testing, actual nonzero Web Audio samples, mute/zero volume, interruption recovery, sound cues, legacy progress preservation and unavailable-audio fallback. Automated WebKit is not a hardware iPhone listening test.
