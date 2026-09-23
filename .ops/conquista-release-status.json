@@ -1,0 +1,12 @@
+{
+  "version": "solaris-conquista-v2",
+  "path": "/jogo/",
+  "legacyPath": "/passeio/",
+  "phases": 15,
+  "chapters": 5,
+  "maximumStars": 45,
+  "physicalPrizes": false,
+  "serverValidated": false,
+  "qaPassed": true,
+  "qaRun": "https://github.com/FrancoEvora/explorer/actions/runs/35809062000"
+}

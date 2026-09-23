@@ -50,3 +50,6 @@ console.log(`Solaris ${VERSION}: ${SCENES.length-1} permanently named points, co
 
 // Optional 2D day-game, verified in mobile WebKit and desktop Chromium.
 await import('./game-update.mjs').then(m => m.installGame());
+
+// Explore e Conquiste: virtual-only progression, verified through all 15 phases.
+await import('./conquest-update.mjs').then(m => m.installConquest());
