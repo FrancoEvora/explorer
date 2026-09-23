@@ -1,0 +1,76 @@
+name: Solaris Phase One Touch Release
+on:
+  push:
+    branches: [solaris-imersivo-mobile]
+    paths: ['.github/workflows/solaris-phase1-touch-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: solaris-phase1-touch-release
+  cancel-in-progress: false
+jobs:
+  verify-and-release:
+    if: github.repository == 'FrancoEvora/explorer' && github.ref_name == 'solaris-imersivo-mobile' && github.actor == 'FrancoEvora'
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Build only the reviewed touch and icon candidate
+        run: |
+          python3 .ops/phase1-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          expected={'site/conquista/conquista.js':'402ee01c69fa84cb316e6e8af992444f7d7245f6ed020e0c1d150b2daaaeb831','site/conquista/conquista.css':'ee94a1ad063fe35b41f1af6dcc1e3234a7ca3201655630fa70a210167d53d6d2','site/conquista/index.html':'299af4c74e12741be6b0e0d6a66b1ed76a55491c6616a146bbe142cce92b7170','site/conquista/input.js':'0f36c82a9ed796b7ec0451a11a8de80b8b0689ea37cc205a87016e44e940882d','site/conquista/README.md':'dec27b8da0520f00a1ff9ac796b2f8e59e53bf77924fbfd964b71993d49fb132','.ops/conquest-update.mjs':'720f64b09aeeddcb42c7beedb2fd5361bcf87432c7510ce3032fb5b26ea0dbdb'}
+          for name,digest in expected.items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest, 'Candidate differs from reviewed source: '+name
+          PY
+          node .ops/build-solaris.mjs
+      - name: Install isolated browsers
+        run: |
+          npm install --prefix "$RUNNER_TEMP/solaris-touch-qa" --no-save --package-lock=false playwright@1.58.2
+          "$RUNNER_TEMP/solaris-touch-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify native icon taps, missing clicks, duplicate protection and save restoration
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-touch-qa/node_modules
+          QA_TOUCH_OUTPUT: qa-touch
+        run: node tests/solaris-touch-phase1.cjs
+      - name: Verify all 15 phases and original masterplan
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-touch-qa/node_modules
+          QA_OUTPUT: qa-regression
+        run: node tests/solaris-conquista.cjs
+      - name: Verify music and all nine visit rewards are preserved
+        env:
+          QA_NODE_MODULES: ${{ runner.temp }}/solaris-touch-qa/node_modules
+          QA_V22_OUTPUT: qa-music
+        run: node tests/solaris-v22.cjs
+      - name: Publish the verified correction without modifying user saves
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,os
+          for name in ['qa-touch/report.json','qa-regression/report.json','qa-music/report.json']:
+              report=json.loads(Path(name).read_text())
+              assert report['passed'] is True and all(r['passed'] for r in report['reports'])
+          status={'version':'solaris-conquista-v2.2.1','path':'/jogo/','nativeTouch':True,'inlineIcons':True,'explicitPhaseOneSteps':True,'allPhasesPassed':True,'musicPreserved':True,'visitRewardsPreserved':True,'saveKey':'solaris-conquista-v2','hardwareIPhoneTest':False,'qaPassed':True,'qaRun':'https://github.com/FrancoEvora/explorer/actions/runs/'+os.environ['GITHUB_RUN_ID']}
+          Path('.ops/phase1-touch-release-status.json').write_text(json.dumps(status,ensure_ascii=False,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/conquista/conquista.js site/conquista/conquista.css site/conquista/index.html site/conquista/input.js site/conquista/README.md .ops/conquest-update.mjs .ops/phase1-touch-release-status.json
+          git commit -m 'fix(solaris): publish native touch phase controls and clear first-route progression'
+          git push origin HEAD:solaris-imersivo-mobile
+          git rev-parse HEAD > qa-touch/released-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: solaris-phase1-touch-qa
+          path: |
+            qa-touch/
+            qa-regression/
+            qa-music/
+          retention-days: 7
