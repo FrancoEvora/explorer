@@ -1,0 +1,4 @@
+import http from 'node:http'; import {readFile,stat} from 'node:fs/promises'; import {resolve,extname} from 'node:path';
+const root=resolve(process.argv[2]||'.'); const port=Number(process.env.PORT||4173);
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.png':'image/png','.webp':'image/webp','.json':'application/json'};
+http.createServer(async(req,res)=>{try{const p=decodeURIComponent(new URL(req.url,'http://local').pathname);let f=resolve(root,'.'+p);if(!f.startsWith(root+'/')&&f!==root)throw Error();if((await stat(f)).isDirectory())f=resolve(f,'index.html');res.setHeader('Content-Type',mime[extname(f)]||'application/octet-stream');res.end(await readFile(f));}catch{res.statusCode=404;res.end('Não encontrado');}}).listen(port,'0.0.0.0',()=>console.log(`Metropolitan: http://localhost:${port}`));

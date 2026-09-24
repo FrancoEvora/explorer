@@ -65,3 +65,28 @@ const publicFiles = fs.readdirSync(out, { recursive: true }).filter(name => fs.s
 const allowedFiles = ['assets/masterplan.jpg', 'assets/masterplan.webp', 'index.html', 'manifest.webmanifest', 'sw.js', 'version.json'];
 if (JSON.stringify(publicFiles) !== JSON.stringify(allowedFiles)) throw new Error('Unexpected file in the navigation-only release.');
 console.log(`Solaris ${NAVIGATION_VERSION}: navigation only, no game runtime or game assets published.`);
+
+// Add the independent Metropolitan experience without changing any Solaris output.
+const metropolitanFiles = ['index.html', 'styles.css', 'app.js', 'assets/implantacao.png', 'assets/portaria.webp', 'assets/convivencia.webp', 'assets/logistica.webp'];
+const solarisBefore = new Map(publicFiles.map(file => [file, fs.readFileSync(path.join(out, file))]));
+for (const file of metropolitanFiles) {
+  const origin = path.join('metropolitan', file);
+  const destination = path.join(out, 'metropolitan', file);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  if (file === 'index.html') {
+    const metroHtml = fs.readFileSync(origin, 'utf8');
+    if (!metroHtml.includes('Mapa interativo do Metropolitan')) throw new Error('Metropolitan entry missing');
+    fs.writeFileSync(destination, metroHtml.replace('<head>', '<head>\n  <base href="/metropolitan/">'));
+  } else {
+    if (file === 'app.js') new vm.Script(fs.readFileSync(origin, 'utf8'));
+    fs.copyFileSync(origin, destination);
+  }
+}
+for (const [file, before] of solarisBefore) {
+  if (!before.equals(fs.readFileSync(path.join(out, file)))) throw new Error('Existing Solaris output changed: ' + file);
+}
+const expected = [...allowedFiles, ...metropolitanFiles.map(file => 'metropolitan/' + file)].sort();
+const actual = fs.readdirSync(out, {recursive:true}).filter(file=>fs.statSync(path.join(out,file)).isFile()).sort();
+if (JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error('Unexpected file in combined release');
+console.log('Metropolitan: independent /metropolitan experience added; all six Solaris files unchanged.');
+
