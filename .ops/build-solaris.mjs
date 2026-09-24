@@ -67,7 +67,7 @@ if (JSON.stringify(publicFiles) !== JSON.stringify(allowedFiles)) throw new Erro
 console.log(`Solaris ${NAVIGATION_VERSION}: navigation only, no game runtime or game assets published.`);
 
 // Add the independent Metropolitan experience without changing any Solaris output.
-const metropolitanFiles = ['index.html', 'styles.css', 'app.js', 'assets/implantacao.png', 'assets/portaria.webp', 'assets/convivencia.webp', 'assets/logistica.webp'];
+const metropolitanFiles = ['index.html', 'styles.css', 'app.js', 'assets/implantacao.png', 'assets/portaria.webp', 'assets/convivencia.webp', 'assets/logistica.webp', 'assets/visao-aerea.jpg'];
 const solarisBefore = new Map(publicFiles.map(file => [file, fs.readFileSync(path.join(out, file))]));
 for (const file of metropolitanFiles) {
   const origin = path.join('metropolitan', file);
