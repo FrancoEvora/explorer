@@ -43,15 +43,18 @@ $('#block-layer').innerHTML=blocks.map(b=>`<polygon class="block-polygon" data-b
 const lotLabel=p=>`Lote ${String(p.n).padStart(2,'0')}`;
 const lotButton=p=>`<button class="lot-choice${p.institutional?' institutional':''}" data-lot="${p.id}" aria-pressed="${active===p.id}" aria-label="Selecionar quadra ${p.block}, lote ${String(p.n).padStart(2,'0')}${p.institutional?', institucional':''}">${String(p.n).padStart(2,'0')}${p.institutional?'<small>INST.</small>':''}</button>`;
 $('#lot-block').insertAdjacentHTML('beforeend',blocks.map(b=>`<option value="${b.n}">Quadra ${b.n}</option>`).join(''));
-$('#lot-layer').innerHTML=lots.map(p=>`<polygon class="lot-polygon${p.institutional?' institutional':''}" data-lot="${p.id}" points="${p.poly}"><title>Quadra ${p.block} · ${lotLabel(p)}${p.institutional?' · Institucional':''}</title></polygon>`).join('');
+$('#lot-layer').innerHTML=lots.map(p=>`<polygon class="lot-polygon${p.institutional?' institutional':''}" data-lot="${p.id}" role="button" tabindex="-1" points="${p.poly}"><title>Quadra ${p.block} · ${lotLabel(p)}${p.institutional?' · Institucional':''}</title></polygon>`).join('');
 function renderLotList(){
  const block=$('#lot-block').value,q=$('#lot-search').value.toUpperCase().replace(/QUADRA|LOTE/g,'').replace(/[^A-Z0-9]/g,'');
- const found=lots.filter(p=>(!block||p.block===block)&&(!q||[String(p.n),String(p.n).padStart(2,'0'),p.block+p.n,p.block+String(p.n).padStart(2,'0'),p.block].includes(q)));
+ const status=$('#lot-status').value;
+ const found=lots.filter(p=>(!status||(status==='indisponivel'?['bloqueado','indisponivel','institucional'].includes(window.SolarisExperience?.statusFor(p.id)):window.SolarisExperience?.statusFor(p.id)===status))&&(!block||p.block===block)&&(!q||[String(p.n),String(p.n).padStart(2,'0'),p.block+p.n,p.block+String(p.n).padStart(2,'0'),p.block].includes(q)));
  $('#lot-results').textContent=`${found.length} ${found.length===1?'lote encontrado':'lotes encontrados'}`;
- $('#lot-options').innerHTML=found.length?blocks.map(b=>{const group=found.filter(p=>p.block===b.n);return group.length?`<section class="lot-group"><h3>Quadra ${b.n}<small>${group.length} ${group.length===1?'lote':'lotes'}</small></h3><div class="lot-grid">${group.map(lotButton).join('')}</div></section>`:'';}).join(''):'<p class="empty-lots">Nenhum lote com essa identificação. Experimente A 01 ou escolha outra quadra.</p>';
+ $('#lot-options').innerHTML=found.length?blocks.map(b=>{const group=found.filter(p=>p.block===b.n);return group.length?`<section class="lot-group"><h3>Quadra ${b.n}<small>${group.length} ${group.length===1?'lote':'lotes'}</small></h3><div class="lot-grid">${group.map(lotButton).join('')}</div></section>`:'';}).join(''):'<p class="empty-lots">Nenhum lote com essa identificação. Experimente A 01 ou ajuste os filtros.</p>';
+ window.SolarisExperience?.paint();
 }
 $('#lot-block').onchange=renderLotList;$('#lot-search').oninput=renderLotList;renderLotList();
-document.addEventListener('click',e=>{const el=e.target.closest('button[data-lot]');if(el)select(el.dataset.lot);});
+document.addEventListener('click',e=>{const el=e.target.closest('button[data-lot]');if(el)select(el.dataset.lot);else if(e.detail===0){const shape=e.target.closest('polygon[data-lot]');if(shape)select(shape.dataset.lot);}});
+document.addEventListener('keydown',e=>{const shape=e.target.closest('polygon[data-lot]');if(shape&&['Enter',' '].includes(e.key)){e.preventDefault();e.stopPropagation();select(shape.dataset.lot);}});
 function updateSelection(){
  $$('[data-place]').forEach(e=>e.setAttribute('aria-pressed',e.dataset.place===active));
  $$('[data-block]').forEach(e=>{const selected=e.dataset.block===active;if(e.tagName.toLowerCase()==='button')e.setAttribute('aria-pressed',selected);else e.classList.toggle('selected',selected);});
@@ -65,10 +68,10 @@ function changeTab(next){
 }
 function setLayers(){
  const technical=tab!=='places';$('#technical-wrap').hidden=!technical;$('#masterplan').hidden=technical;$('#portaria-implantacao').style.display=technical?'none':'';
- $('#markers').hidden=!pointsVisible||technical;$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&tab==='lots'?'visible':'hidden';
- stage.classList.toggle('show-blocks',tab==='blocks'&&pointsVisible);stage.classList.toggle('show-lots',tab==='lots'&&pointsVisible);map.classList.toggle('technical-mode',technical);
+ $('#markers').hidden=!pointsVisible||technical;$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&technical?'visible':'hidden';
+ stage.classList.toggle('show-blocks',tab==='blocks'&&pointsVisible);stage.classList.toggle('show-lots',technical&&pointsVisible);map.classList.toggle('technical-mode',technical);
  $('#map-mode-label').innerHTML=technical?'PLANTA DE LOTES · IDENTIFICAÇÃO ESQUEMÁTICA':'<i></i> IMPLANTAÇÃO INTERATIVA';
- $('#layers-btn').setAttribute('aria-pressed',pointsVisible);$('#layers-btn').lastElementChild.textContent=pointsVisible?'Pontos visíveis':'Mostrar pontos';updateSelection();
+ $('#layers-btn').setAttribute('aria-pressed',pointsVisible);$('#layers-btn').lastElementChild.textContent=pointsVisible?'Pontos visíveis':'Mostrar pontos';updateSelection();window.SolarisExperience?.paint();
 }
 function showDetails(p,kind='places'){
  const isBlock=kind==='blocks',isLot=kind==='lots',title=isBlock?'Quadra '+p.n:isLot?lotLabel(p)+' · Quadra '+p.block:p.title;
@@ -78,7 +81,7 @@ function showDetails(p,kind='places'){
  $('#detail-title').textContent=title;
  $('#detail-text').textContent=isLot?(p.institutional?'Lote identificado como área institucional na planta de referência.':`Localizado na quadra ${p.block}. O contorno destacado mostra sua posição na planta de identificação.`):p.description;
  $('#detail-tags').innerHTML=(isBlock?[p.position]:isLot?['Quadra '+p.block,lotLabel(p),...(p.institutional?['Institucional']:[])]:p.tags).map(t=>`<span>${t}</span>`).join('');
- $('#detail-note').textContent=kind==='places'?p.note:'Identificação esquemática baseada na planta urbanística de 22/07/2025. Consulte o projeto para medidas e limites. Disponibilidade e valores sob consulta.';
+ $('#detail-note').textContent=kind==='places'?p.note:'Identificação esquemática baseada na planta urbanística de 22/07/2025. Consulte o projeto para medidas e limites. Metragem, preço de tabela e situação comercial consultados no Évora Enterprise. Valores e disponibilidade sujeitos a confirmação.';
  const technical=kind!=='places';
  $('#detail-text').hidden=technical&&!(isLot&&p.institutional);
  $('#detail-tags').hidden=technical;$('#detail-note').hidden=technical;
@@ -87,18 +90,18 @@ function showDetails(p,kind='places'){
  const dl=$('#detail-lots');dl.hidden=kind==='places';
  if(isBlock)dl.innerHTML='<p class="lot-detail-label">Selecione um lote</p><div class="lot-grid">'+lots.filter(l=>l.block===p.n).map(lotButton).join('')+'</div>';
  if(isLot){const group=lots.filter(l=>l.block===p.block),i=group.indexOf(p);dl.innerHTML=`<div class="lot-pagination"><button class="outline-button" data-lot="${group[(i-1+group.length)%group.length].id}" aria-label="Lote anterior">${icon('left')}Anterior</button><button class="outline-button" data-lot="${group[(i+1)%group.length].id}" aria-label="Próximo lote">Próximo${icon('right')}</button></div><button class="text-button" id="back-to-block">Ver toda a quadra ${p.block} ${icon('arrow')}</button>`;$('#back-to-block').onclick=()=>select('quadra-'+p.block.toLowerCase());}
- $('#detail-action').hidden=!p.image;map.classList.add('detail-open');$('#map-heading-title').textContent=title;
+ $('#detail-action').hidden=!p.image;map.classList.add('detail-open');$('#map-heading-title').textContent=title;window.SolarisExperience?.show(p,kind);
 }
 function select(id,{byTour=false}={}){
  if(!byTour&&tour.running)stopTour();const p=places.find(v=>v.id===id)||blocks.find(v=>v.id===id)||lots.find(v=>v.id===id);if(!p)return;
- const kind=lots.includes(p)?'lots':blocks.includes(p)?'blocks':'places';changeTab(kind);active=id;pointsVisible=true;setLayers();showDetails(p,kind);updateSelection();focus(p);closeSidebar();history.replaceState(null,'','#'+id);
+ const kind=lots.includes(p)?'lots':blocks.includes(p)?'blocks':'places';changeTab(kind);active=id;pointsVisible=true;setLayers();showDetails(p,kind);updateSelection();focus(p);closeSidebar();history.replaceState(null,'','#'+id);window.SolarisExperience?.select(p,kind);
 }
 $('#parcel-info').addEventListener('toggle',()=>{
  if(!active||tab==='places')return;
  const p=lots.find(v=>v.id===active)||blocks.find(v=>v.id===active);
  if(p)focus(p);
 });
-function closeDetails(){active=null;$('#detail-panel').hidden=true;map.classList.remove('detail-open');updateSelection();$('#map-heading-title').textContent='O Solaris, por inteiro.';history.replaceState(null,'',location.pathname+location.search);}
+function closeDetails(){window.SolarisExperience?.close();active=null;$('#detail-panel').hidden=true;map.classList.remove('detail-open');updateSelection();$('#map-heading-title').textContent='O Solaris, por inteiro.';history.replaceState(null,'',location.pathname+location.search);}
 
 function overview(){stopTour();closeDetails();changeTab('places');tilted=false;$('#tilt-btn').setAttribute('aria-pressed',false);stage.classList.remove('tilted');fit();closeSidebar();}
 $$('[data-place]').forEach(e=>e.addEventListener('click',()=>select(e.dataset.place)));
@@ -126,10 +129,10 @@ $('#fullscreen-btn').onclick=async()=>{try{if(document.fullscreenElement)await d
 document.addEventListener('fullscreenchange',()=>{icons();requestAnimationFrame(()=>fit(false));});
 const tour={running:false,paused:false,index:0,timer:0,start:0,duration:8500,elapsed:0};
 function tourVisit(){select(tourOrder[tour.index],{byTour:true});$('#tour-count').textContent=String(tour.index+1).padStart(2,'0')+' / '+String(tourOrder.length).padStart(2,'0');$('#tour-name').textContent=places.find(p=>p.id===tourOrder[tour.index]).short;tour.start=performance.now();tour.elapsed=0;$('#tour-progress').style.width='0%';}
-function tourTick(t){if(!tour.running)return;if(!tour.paused){const elapsed=t-tour.start;$('#tour-progress').style.width=Math.min(elapsed/tour.duration*100,100)+'%';if(elapsed>=tour.duration){if(tour.index===tourOrder.length-1){stopTour();toast('Percurso concluído. Continue explorando no seu ritmo.');return;}tour.index++;tourVisit();}}tour.timer=requestAnimationFrame(tourTick);}
+function tourTick(t){if(!tour.running)return;if(!tour.paused){const elapsed=t-tour.start;$('#tour-progress').style.width=Math.min(elapsed/tour.duration*100,100)+'%';if(elapsed>=tour.duration&&!window.SolarisExperience?.holdTour()){if(tour.index===tourOrder.length-1){stopTour();toast('Percurso concluído. Continue explorando no seu ritmo.');return;}tour.index++;tourVisit();}}tour.timer=requestAnimationFrame(tourTick);}
 function startTour(){if(tour.running){stopTour();return;}tour.running=true;tour.paused=false;tour.index=0;$('#tour-player').hidden=false;map.classList.add('tour-active');$('#tour-btn').lastElementChild.textContent='Encerrar percurso';$('#tour-pause').innerHTML=icon('pause');$('#tour-pause').setAttribute('aria-label','Pausar percurso');tourVisit();tour.timer=requestAnimationFrame(tourTick);}
-function stopTour(){tour.running=false;cancelAnimationFrame(tour.timer);$('#tour-player').hidden=true;map.classList.remove('tour-active');$('#tour-btn').lastElementChild.textContent='Percurso guiado';}
-$('#tour-btn').onclick=startTour;$('#tour-stop').onclick=stopTour;$('#tour-next').onclick=()=>{tour.index=(tour.index+1)%tourOrder.length;tourVisit();};$('#tour-prev').onclick=()=>{tour.index=(tour.index-1+tourOrder.length)%tourOrder.length;tourVisit();};$('#tour-pause').onclick=()=>{tour.paused=!tour.paused;if(tour.paused)tour.elapsed=performance.now()-tour.start;else tour.start=performance.now()-tour.elapsed;$('#tour-pause').innerHTML=icon(tour.paused?'play':'pause');$('#tour-pause').setAttribute('aria-label',tour.paused?'Continuar percurso':'Pausar percurso');};
+function stopTour(){if(tour.running)window.SolarisExperience?.pause();tour.running=false;cancelAnimationFrame(tour.timer);$('#tour-player').hidden=true;map.classList.remove('tour-active');$('#tour-btn').lastElementChild.textContent='Percurso guiado';}
+$('#tour-btn').onclick=startTour;$('#tour-stop').onclick=stopTour;$('#tour-next').onclick=()=>{tour.index=(tour.index+1)%tourOrder.length;tourVisit();};$('#tour-prev').onclick=()=>{tour.index=(tour.index-1+tourOrder.length)%tourOrder.length;tourVisit();};$('#tour-pause').onclick=()=>{tour.paused=!tour.paused;if(tour.paused){tour.elapsed=performance.now()-tour.start;window.SolarisExperience?.pause();}else tour.start=performance.now()-tour.elapsed;$('#tour-pause').innerHTML=icon(tour.paused?'play':'pause');$('#tour-pause').setAttribute('aria-label',tour.paused?'Continuar percurso':'Pausar percurso');};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&tour.running&&!tour.paused)$('#tour-pause').click();});
 let galleryIndex=0,galleryScale=1,gx=0,gy=0,galleryPointer=null;const gallery=$('#gallery-dialog'),gimage=$('#gallery-image');
 function galleryDraw(){gimage.style.transform=`translate(${gx}px,${gy}px) scale(${galleryScale})`;$('#gallery-reset').textContent=Math.round(galleryScale*100)+'%';$('#gallery-minus').disabled=galleryScale<=1;$('#gallery-plus').disabled=galleryScale>=3;}

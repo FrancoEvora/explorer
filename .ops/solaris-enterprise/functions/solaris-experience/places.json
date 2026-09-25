@@ -1,0 +1,56 @@
+[
+  {
+    "id": "portaria",
+    "title": "Portaria",
+    "description": "Uma perspectiva da chegada ao Solaris, com recepção, cobertura de acesso e paisagismo integrado.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "praca",
+    "title": "Praça",
+    "description": "Praça paisagística na área triangular próxima ao clube e às quadras. Explore os caminhos e os espaços de convivência representados na imagem.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "bosque",
+    "title": "Bosque e Pista de Caminhada",
+    "description": "Faixa verde entre as quadras residenciais, com bosque e pista de caminhada. A imagem preserva o traçado dos caminhos e o paisagismo de referência.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "lago",
+    "title": "Lago e Deck",
+    "description": "O lago, os decks e os espaços de estar aproximam o cotidiano da paisagem natural.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "clube",
+    "title": "Clube e Piscinas",
+    "description": "Clube e piscinas em uma nova perspectiva, com espaços de descanso e convivência em meio ao verde.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "quadras",
+    "title": "Quadras",
+    "description": "Veja o setor esportivo e a conexão com as áreas de lazer do masterplan.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "hipica",
+    "title": "Centro Hípico",
+    "description": "Percorra visualmente a arena, as instalações de apoio e a faixa verde ao redor.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "acesso",
+    "title": "Acesso principal",
+    "description": "Conexão viária externa representada na imagem. A Portaria do Solaris está identificada separadamente, junto ao setor de lazer.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  },
+  {
+    "id": "parque",
+    "title": "Parque das Árvores",
+    "description": "Explore as quadras do Bairro Parque das Árvores integradas ao conjunto.",
+    "note": "Perspectiva ilustrativa. Consulte o projeto para as características definitivas."
+  }
+]
