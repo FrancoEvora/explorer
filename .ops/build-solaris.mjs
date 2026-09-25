@@ -3,7 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const out=path.resolve('solaris-dist');
-const VERSION='2026-09-25-solaris-mobile-fullscreen-v7';
+const VERSION='2026-09-25-solaris-browser-chrome-v8';
 const solarisFiles=['index.html','styles.css','app.js','experience.js','lots-data.js','lot-sizes.js','assets/solaris-logo-white-source.jpeg','assets/solaris-ambient.mp3','assets/masterplan.webp','assets/lotes.webp','assets/ambientes/hipica.webp','assets/ambientes/praca.webp','assets/ambientes/quadras.webp','assets/ambientes/portaria-alameda.webp','assets/ambientes/clube.webp','assets/ambientes/parque.webp','assets/ambientes/lago.webp','assets/ambientes/bosque.webp','assets/ambientes/portaria.webp','assets/ambientes/acesso-parque.webp'];
 const metropolitanFiles=['index.html','styles.css','app.js','assets/implantacao.png','assets/portaria.webp','assets/convivencia.webp','assets/logistica.webp','assets/visao-aerea.jpg'];
 const source=process.env.SOLARIS_SOURCE||'solaris';
@@ -30,5 +30,6 @@ const expected=[...solarisFiles,...metropolitanFiles.map(p=>'metropolitan/'+p),'
 const actual=fs.readdirSync(out,{recursive:true}).filter(p=>fs.statSync(path.join(out,p)).isFile()).sort();
 if(JSON.stringify(expected)!==JSON.stringify(actual))throw new Error('Unexpected public file');
 console.log(`${VERSION}: ${blocks.length} blocks, ${lots.length} unique parcels, 9 supplied environment perspectives and 1 park access render. Metropolitan preserved; ${actual.length} public files.`);
+
 
 

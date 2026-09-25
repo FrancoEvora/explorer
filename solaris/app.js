@@ -158,20 +158,11 @@ map.addEventListener('dblclick',e=>{if(e.target.closest('button,.detail-panel'))
 function toast(text){clearTimeout(toastTimer);$('#toast').textContent=text;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,3500);}
 function present(enable){presenting=enable;document.body.classList.toggle('presenting',enable);$('#presentation-bar').hidden=!enable;if(enable){stopTour();closeDetails();}requestAnimationFrame(()=>fit(false));}
 $('#present-btn').onclick=()=>present(true);$('#exit-presentation').onclick=()=>present(false);
-$('#mobile-layout-toggle').onclick=async()=>{
- if(document.fullscreenElement)try{await document.exitFullscreen();}catch{}
- const expanded=document.body.classList.toggle('mobile-expanded');
- $('#mobile-layout-toggle').setAttribute('aria-label',expanded?'Expandir mapa':'Mostrar navegação completa');
- $('#mobile-layout-toggle').setAttribute('title',expanded?'Expandir mapa':'Mostrar navegação completa');
- $('#mobile-layout-toggle').innerHTML=icon(expanded?'expand':'collapse');
-};
 $('#fullscreen-btn').onclick=async()=>{
  try{
   if(document.fullscreenElement){await document.exitFullscreen();return;}
-  document.body.classList.remove('mobile-expanded');
-  $('#mobile-layout-toggle').setAttribute('aria-label','Mostrar navegação completa');$('#mobile-layout-toggle').innerHTML=icon('collapse');
   if(document.documentElement.requestFullscreen&&document.fullscreenEnabled){await document.documentElement.requestFullscreen();}
-  else if(matchMedia('(max-width:600px)').matches){toast('O mapa já ocupa toda a área disponível. Abra pela Tela de Início para navegar sem as barras do navegador.');}
+  else if(matchMedia('(max-width:600px)').matches){toast('Para abrir sem a barra do navegador, adicione o Solaris à Tela de Início e abra pelo ícone.');}
   else present(true);
  }catch{toast('A tela cheia não está disponível neste navegador. O mapa continua pronto para explorar.');}
 };
@@ -203,5 +194,6 @@ image.addEventListener('load',ready,{once:true});image.addEventListener('error',
 setLayers();
 
 $('#lot-map').addEventListener('error',()=>toast('A planta de lotes não carregou. Atualize a página para tentar novamente.'));
+
 
 
