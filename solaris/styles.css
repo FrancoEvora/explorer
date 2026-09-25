@@ -169,3 +169,5 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}.header,.workspace,.foo
 }
 @media(max-height:500px) and (max-width:1000px){.detail-panel.block-detail{left:auto;right:12px;top:65px;bottom:12px;width:310px;max-height:calc(100% - 80px)}.detail-panel.block-sheet{height:auto}.block-detail .detail-header h2{font-size:16px}}
 @media(prefers-reduced-motion:reduce){#masterplan,.technical-image-wrap{transition:none}}
+.block-sheet #commercial-info{flex:0 0 auto}
+.block-sheet #detail-lots{flex:1 1 0}
