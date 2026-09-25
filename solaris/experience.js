@@ -36,6 +36,7 @@
  }
  function renderCommerce(){
   const box=$('#commercial-info');box.replaceChildren();box.hidden=!selection||selection.kind==='places';
+  $('#parcel-note').textContent=$('#detail-note').textContent;
   if(box.hidden)return;
   const {p,kind}=selection;
   const line=(tag,text,cls,parent=box)=>{const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;parent.append(el);return el;};
@@ -59,6 +60,7 @@
    if(u.pricePerSqm)line('span',`${currency.format(u.pricePerSqm)}/m² · preço de tabela`,'unit-price');
   }
   line('small',`Évora Enterprise · atualizado às ${new Date(asOf).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,'inventory-source');
+  $('#parcel-note').textContent+=` Consulta ao Évora Enterprise em ${new Date(asOf).toLocaleString('pt-BR')}.${u.pricePerSqm?` Preço por metro quadrado: ${currency.format(u.pricePerSqm)}.`:''}`;
  }
  async function loadInventory(force=false){
   if(request)return request;

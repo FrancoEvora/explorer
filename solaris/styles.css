@@ -79,6 +79,6 @@ dialog{color:var(--text);border:1px solid #728f9855;background:#153328;padding:0
  .inventory-legend{top:76px;left:12px;max-width:calc(100% - 24px);font-size:8px;gap:5px 9px;padding:5px 8px}.inventory-legend span:before{width:5px;height:5px}
  .block-detail .detail-copy h2{font-size:19px;margin-bottom:8px}.commercial-info{margin-bottom:8px}.commercial-row{margin-bottom:3px}.lot-price{font-size:21px}.unit-price{font-size:9px}.inventory-source{font-size:9px;margin-top:2px}.read-selection{padding:5px 8px;font-size:10px}
 }
-@media(max-width:600px) and (min-height:501px){.detail-panel.block-detail{max-height:54%}.block-detail #detail-lots>.lot-grid{max-height:105px}.block-detail .detail-copy{padding:12px 14px}.lot-pagination .outline-button{height:42px}}
+@media(max-width:600px) and (min-height:501px){.detail-panel.block-detail{max-height:48%}.block-detail #detail-lots>.lot-grid{max-height:105px}.block-detail .detail-copy{padding:12px 14px}.lot-pagination .outline-button{height:42px}.block-detail .unit-price,.block-detail .inventory-source{display:none}.detail-open .inventory-legend{display:none}}
 @media(max-width:360px){.header-actions{gap:3px}.header-actions .tour-button{padding:8px 6px;max-width:90px}.wordmark strong{font-size:18px;letter-spacing:2px}.wordmark>span{font-size:7px}.availability-badge{font-size:10px}.inventory-source{font-size:8px}}
 @media(max-height:500px) and (max-width:1000px){.sound-panel{top:50px;max-height:calc(100dvh - 62px)}.inventory-legend{top:66px;font-size:8px}.detail-open .inventory-legend{max-width:calc(100% - 350px)}}
