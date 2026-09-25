@@ -25,7 +25,15 @@ function bounds(x,y,s){const w=map.clientWidth,h=map.clientHeight,pad=Math.min(w
 function move(x,y,s,animate=false){cancelAnimationFrame(animation);s=Math.min(camera.max,Math.max(camera.min,s));({x,y}=bounds(x,y,s));if(!animate||matchMedia('(prefers-reduced-motion: reduce)').matches){Object.assign(camera,{x,y,s});draw();return;}const from={...camera},start=performance.now();const tick=t=>{const p=Math.min((t-start)/650,1),e=1-Math.pow(1-p,3);camera.x=from.x+(x-from.x)*e;camera.y=from.y+(y-from.y)*e;camera.s=from.s+(s-from.s)*e;draw();if(p<1)animation=requestAnimationFrame(tick);};animation=requestAnimationFrame(tick);}
 function fit(animate=true){const pad=matchMedia('(max-width:600px)').matches?25:36,w=map.clientWidth,h=map.clientHeight;camera.min=Math.min((w-pad*2)/size.w,(h-pad*2)/size.h);camera.max=Math.max(3.2,camera.min*12);move((w-size.w*camera.min)/2,(h-size.h*camera.min)/2,camera.min,animate);}
 function zoom(factor,px=map.clientWidth/2,py=map.clientHeight/2){const ns=Math.min(camera.max,Math.max(camera.min,camera.s*factor)),r=ns/camera.s;move(px-(px-camera.x)*r,py-(py-camera.y)*r,ns);}
-function focus(p){const isMobile=map.clientWidth<600,ns=camera.min*(p.block&&!isMobile?5.5:p.zoom);const cx=map.clientWidth*(isMobile?.5:.39),cy=map.clientHeight*(isMobile?.32:.49);move(cx-p.x/100*size.w*ns,cy-p.y/100*size.h*ns,ns,true);}
+function focus(p){
+ const isMobile=map.clientWidth<600,ns=camera.min*(p.block&&!isMobile?5.5:p.zoom);
+ let cx=map.clientWidth*(isMobile?.5:.39),cy=map.clientHeight*(isMobile?.32:.49);
+ if(tab!=='places'&&matchMedia('(max-width:600px) and (min-height:501px)').matches&&!$('#detail-panel').hidden){
+  const heading=$('.map-heading'),top=heading.offsetTop+heading.offsetHeight+45,bottom=$('#detail-panel').offsetTop-20;
+  cy=Math.max(top,top+(bottom-top)/2);
+ }
+ move(cx-p.x/100*size.w*ns,cy-p.y/100*size.h*ns,ns,true);
+}
 function listPlace(p){return`<button class="place-item" data-place="${p.id}" aria-pressed="false"><span class="place-icon">${icon(p.icon)}</span><span class="place-label"><strong>${p.title}</strong><small>${p.subtitle}</small></span>${icon('right')}</button>`;}
 $('#places-list').innerHTML=places.map(listPlace).join('');
 $('#blocks-list').innerHTML=blocks.map(b=>`<button class="place-item" data-block="${b.id}" aria-pressed="false"><span class="place-icon block-number">${b.n}</span><span class="place-label"><strong>Quadra ${b.n}</strong><small>${b.position}</small></span>${icon('right')}</button>`).join('');
@@ -71,6 +79,11 @@ function showDetails(p,kind='places'){
  $('#detail-text').textContent=isLot?(p.institutional?'Lote identificado como área institucional na planta de referência.':`Localizado na quadra ${p.block}. O contorno destacado mostra sua posição na planta de identificação.`):p.description;
  $('#detail-tags').innerHTML=(isBlock?[p.position]:isLot?['Quadra '+p.block,lotLabel(p),...(p.institutional?['Institucional']:[])]:p.tags).map(t=>`<span>${t}</span>`).join('');
  $('#detail-note').textContent=kind==='places'?p.note:'Identificação esquemática baseada na planta urbanística de 22/07/2025. Consulte o projeto para medidas e limites. Disponibilidade e valores sob consulta.';
+ const technical=kind!=='places';
+ $('#detail-text').hidden=technical&&!(isLot&&p.institutional);
+ $('#detail-tags').hidden=technical;$('#detail-note').hidden=technical;
+ $('#parcel-info').hidden=!technical;$('#parcel-info').open=false;
+ $('#parcel-note').textContent=$('#detail-note').textContent;$('#detail-panel').scrollTop=0;
  const dl=$('#detail-lots');dl.hidden=kind==='places';
  if(isBlock)dl.innerHTML='<p class="lot-detail-label">Selecione um lote</p><div class="lot-grid">'+lots.filter(l=>l.block===p.n).map(lotButton).join('')+'</div>';
  if(isLot){const group=lots.filter(l=>l.block===p.block),i=group.indexOf(p);dl.innerHTML=`<div class="lot-pagination"><button class="outline-button" data-lot="${group[(i-1+group.length)%group.length].id}" aria-label="Lote anterior">${icon('left')}Anterior</button><button class="outline-button" data-lot="${group[(i+1)%group.length].id}" aria-label="Próximo lote">Próximo${icon('right')}</button></div><button class="text-button" id="back-to-block">Ver toda a quadra ${p.block} ${icon('arrow')}</button>`;$('#back-to-block').onclick=()=>select('quadra-'+p.block.toLowerCase());}
@@ -80,6 +93,11 @@ function select(id,{byTour=false}={}){
  if(!byTour&&tour.running)stopTour();const p=places.find(v=>v.id===id)||blocks.find(v=>v.id===id)||lots.find(v=>v.id===id);if(!p)return;
  const kind=lots.includes(p)?'lots':blocks.includes(p)?'blocks':'places';changeTab(kind);active=id;pointsVisible=true;setLayers();showDetails(p,kind);updateSelection();focus(p);closeSidebar();history.replaceState(null,'','#'+id);
 }
+$('#parcel-info').addEventListener('toggle',()=>{
+ if(!active||tab==='places')return;
+ const p=lots.find(v=>v.id===active)||blocks.find(v=>v.id===active);
+ if(p)focus(p);
+});
 function closeDetails(){active=null;$('#detail-panel').hidden=true;map.classList.remove('detail-open');updateSelection();$('#map-heading-title').textContent='O Solaris, por inteiro.';history.replaceState(null,'',location.pathname+location.search);}
 
 function overview(){stopTour();closeDetails();changeTab('places');tilted=false;$('#tilt-btn').setAttribute('aria-pressed',false);stage.classList.remove('tilted');fit();closeSidebar();}
