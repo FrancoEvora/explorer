@@ -3,8 +3,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const out=path.resolve('solaris-dist');
-const VERSION='2026-09-25-solaris-reservas-v2';
-const solarisFiles=['index.html','styles.css','app.js','experience.js','lots-data.js','lot-sizes.js','assets/solaris-brand-reference.jpeg','assets/solaris-ambient.mp3','assets/masterplan.webp','assets/lotes.webp','assets/portaria.webp','assets/clube.webp','assets/lago.webp'];
+const VERSION='2026-09-25-solaris-translucent-logo-v3';
+const solarisFiles=['index.html','styles.css','app.js','experience.js','lots-data.js','lot-sizes.js','assets/solaris-logo-white-source.jpeg','assets/solaris-ambient.mp3','assets/masterplan.webp','assets/lotes.webp','assets/portaria.webp','assets/clube.webp','assets/lago.webp'];
 const metropolitanFiles=['index.html','styles.css','app.js','assets/implantacao.png','assets/portaria.webp','assets/convivencia.webp','assets/logistica.webp','assets/visao-aerea.jpg'];
 const source=process.env.SOLARIS_SOURCE||'solaris';
 const metroSource=process.env.METROPOLITAN_SOURCE||'metropolitan';

@@ -96,3 +96,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}.header,.workspace,.foo
 @media(max-width:360px){.header{padding:0 9px}.solaris-logo{width:87px;height:63px}.header-actions .tour-button{max-width:96px;font-size:9px}.mobile-explore{left:9px;font-size:11px;padding:8px}.mobile-explore .icon{width:17px}.map-controls{right:9px}.map-controls .icon-btn{width:27px}.map-controls output{min-width:27px}}
 @media(max-width:600px) and (min-height:501px){.detail-panel.block-detail{max-height:48%;bottom:72px}.block-detail .detail-copy{padding:13px 14px}.commercial-info{margin-bottom:8px}.block-detail #detail-lots:has(.lot-pagination){flex-basis:calc(100% - 85px)}.block-detail #read-selection{align-self:flex-end;margin-bottom:2px}}
 @media(max-height:500px) and (max-width:1000px){.header{height:58px}.solaris-logo{width:71px;height:51px}.mobile-explore{bottom:10px}.reservation-dialog{max-height:calc(100dvh - 16px)}.sound-panel{top:55px}}
+
+/* 30% transparent information surfaces; content stays fully opaque. */
+.detail-panel,.detail-panel.block-detail,.map-heading,.technical-mode .map-heading{background:rgba(16,35,30,.70);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.solaris-logo{border-radius:0;overflow:visible}
