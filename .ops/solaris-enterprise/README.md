@@ -11,3 +11,9 @@ Speech uses the Enterprise's existing enabled AI credentials internally with the
 Audio starts after a visitor's gesture. Voice and music have separate switches and levels. Selecting another point cancels the previous voice; music is ducked during narration. Background tabs pause both streams. The guided tour waits for the narration before moving on. The 30-second instrumental is original synthesized music, with no third-party samples.
 
 Validation: `node --test .ops/solaris-enterprise/tests/commercial.test.mjs`; build: `node .ops/build-solaris.mjs`. The build allowlist excludes all backend code, migration and tests from public output. To reproduce the instrumental, run `python .ops/solaris-enterprise/ops/generate-ambient.py solaris-ambient.wav` (NumPy/SciPy), then encode to MP3 with FFmpeg at 64 kbps.
+
+
+## Solicitação de reserva
+O formulário do passeio recebe nome e WhatsApp e registra uma solicitação no CRM, com protocolo e alerta comercial. Não bloqueia o lote automaticamente. O servidor verifica disponibilidade, escopo, consentimento, limites e duplicidade antes de registrar. As migrações 002 e 003 implementam o recebimento e o encaminhamento ao responsável do lead.
+
+O frontend consulta o Edge pela rota de mesma origem `/api/solaris`. Em falhas de conexão, somente a metragem física previamente consultada permanece visível; disponibilidade comercial não é presumida. A ficha e a narração apresentam características e área, sem preço.

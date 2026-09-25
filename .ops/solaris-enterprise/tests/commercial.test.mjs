@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {publicUnits,narration} from '../functions/solaris-experience/core.mjs';
+import {publicUnits,narration,validateReservation} from '../functions/solaris-experience/core.mjs';
 const row={id:'internal-id',block_code:'A',lot_number:'04',area:'469.53',status:'disponivel',list_price:'586912.50',price_per_sqm:'1250',minimum_price:1,strategic_reason:'private',customer_name:'private'};
 test('canonical IDs and exact Enterprise prices; no private fields',()=>{
  const [u]=publicUnits([row],[]);
@@ -27,10 +27,15 @@ test('inconsistent identifiers fail closed and missing price is not invented',()
 });
 test('narration accepts only an existing selection and reads public values',()=>{
  const units=publicUnits([row],[]),text=narration('lote-a-04',units,[]);
- assert.match(text,/Lote 4, quadra A/);assert.match(text,/469,53/);assert.match(text,/586\.912,50/);
+ assert.match(text,/Lote 4, quadra A/);assert.match(text,/469,53/);assert.match(text,/Lote residencial/);assert.doesNotMatch(text,/586\.912|Preço|R\$/);
  assert.equal(narration('arbitrary customer text',units,[]),null);
  assert.equal(narration('lote-a-90',units,[]),null);
  const sold=publicUnits([{...row,status:'vendido'}],[]);assert.doesNotMatch(narration('lote-a-04',sold,[]),/586|Preço/);
+});
+test('reservation accepts only a known ID shape, valid mobile, consent and UUID',()=>{
+ const valid={id:'lote-b-23',requestId:'23456789-abcd-4abc-8abc-123456789012',name:'  Nome de Teste  ',phone:'(34) 99000-0001',consent:true,website:''};
+ assert.deepEqual(validateReservation(valid),{id:valid.id,requestId:valid.requestId,name:'Nome de Teste',phone:'+5534990000001',consent:true});
+ for(const change of [{phone:'123'},{phone:'(00) 99999-9999'},{consent:false},{name:' '},{website:'spam'},{id:'lote-z-01'},{requestId:'gggggggg-abcd-4abc-8abc-123456789012'}])assert.equal(validateReservation({...valid,...change}),null);
 });
 test('all 249 server identifiers match the actual map, including zero padding',()=>{
  const context={};vm.createContext(context);

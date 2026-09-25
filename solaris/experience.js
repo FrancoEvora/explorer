@@ -1,7 +1,7 @@
 'use strict';
 // Public Enterprise projection and opt-in audio. No commercial data is persisted in the browser.
 (() => {
- const API='https://qsdffayasuzsmngteika.supabase.co/functions/v1/solaris-experience';
+ const API='/api/solaris';
  const PUBLIC_KEY='sb_publishable_nMCXNDXMvU0EbMSSmnEfQg_0uE_lVOW';
  const labels={disponivel:'Disponível',reservado:'Reservado',vendido:'Vendido',bloqueado:'Indisponível',indisponivel:'Indisponível',institucional:'Institucional',unknown:'A confirmar'};
  const currency=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
@@ -14,8 +14,9 @@
 
  async function api(body,signal){
   const response=await fetch(API,{method:'POST',headers:{apikey:PUBLIC_KEY,'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',signal});
-  if(!response.ok)throw new Error('SERVICE_UNAVAILABLE');
-  return response.json();
+  const data=await response.json();
+  if(!response.ok){const error=new Error('SERVICE_UNAVAILABLE');error.code=data.error;throw error;}
+  return data;
  }
  const unitFor=id=>units.get(id);
  const isFresh=()=>loaded&&Date.now()-loaded<90000&&!failed;
@@ -36,31 +37,24 @@
  }
  function renderCommerce(){
   const box=$('#commercial-info');box.replaceChildren();box.hidden=!selection||selection.kind==='places';
-  $('#parcel-note').textContent=$('#detail-note').textContent;
+  $('#parcel-info').hidden=true;
+  const reserve=$('#reserve-lot');reserve.hidden=!selection||selection.kind!=='lots'||selection.p.institutional;
   if(box.hidden)return;
   const {p,kind}=selection;
   const line=(tag,text,cls,parent=box)=>{const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;parent.append(el);return el;};
-  if(!isFresh()){
-   line('p',failed?'Não foi possível consultar o Enterprise.':'Consultando Évora Enterprise…','inventory-message');
-   if(failed){const retry=line('button','Tentar novamente','text-button');retry.onclick=()=>loadInventory(true);}
-   return;
-  }
   if(kind==='blocks'){
    const group=[...units.values()].filter(u=>u.block===p.n),available=group.filter(u=>u.status==='disponivel').length;
-   line('p',`${available} ${available===1?'lote disponível':'lotes disponíveis'} de ${lots.filter(l=>l.block===p.n).length}`,'block-availability');
+   line('p',isFresh()?`${available} ${available===1?'lote disponível':'lotes disponíveis'} de ${lots.filter(l=>l.block===p.n).length}`:`${lots.filter(l=>l.block===p.n).length} lotes · selecione para explorar`,'block-availability');
    return;
   }
-  const u=unitFor(p.id);
-  if(!u){line('p','Situação e preço a confirmar.','inventory-message');return;}
+  const u=isFresh()?unitFor(p.id):null,area=u?.area||lotAreas[p.id],status=p.institutional?'institucional':statusFor(p.id);
+  reserve.disabled=isFresh()&&status!=='disponivel';
+  reserve.setAttribute('aria-label',`Reservar ${lotLabel(p)}, quadra ${p.block}`);
   const row=line('div','','commercial-row');
-  const badge=line('span',labels[u.status],'availability-badge',row);badge.dataset.status=u.status;
-  if(u.area)line('span',`${decimal.format(u.area)} m²`,'lot-area',row);
-  if(u.status==='disponivel'){
-   line('strong',u.price?currency.format(u.price):'Preço sob consulta','lot-price');
-   if(u.pricePerSqm)line('span',`${currency.format(u.pricePerSqm)}/m² · preço de tabela`,'unit-price');
-  }
-  line('small',`Évora Enterprise · atualizado às ${new Date(asOf).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,'inventory-source');
-  $('#parcel-note').textContent+=` Consulta ao Évora Enterprise em ${new Date(asOf).toLocaleString('pt-BR')}.${u.pricePerSqm?` Preço por metro quadrado: ${currency.format(u.pricePerSqm)}.`:''}`;
+  if(area)line('strong',`${decimal.format(area)} m²`,'lot-size',row);
+  const badge=line('span',labels[status],'availability-badge',row);badge.dataset.status=status;
+  line('p',p.institutional?'Área institucional':`Lote residencial · Quadra ${p.block}`,'lot-characteristics');
+  $('#detail-text').hidden=true;
  }
  async function loadInventory(force=false){
   if(request)return request;
@@ -68,7 +62,9 @@
   const panelHeight=$('#detail-panel').offsetHeight;
   request=(async()=>{
    try{
-    const data=await api({action:'inventory'},AbortSignal.timeout(12000));
+    let data;
+    try{data=await api({action:'inventory'},AbortSignal.timeout(25000));}
+    catch(error){if(!navigator.onLine)throw error;data=await api({action:'inventory'},AbortSignal.timeout(25000));}
     if(!Array.isArray(data.units)||!data.units.length||!Number.isFinite(Date.parse(data.asOf)))throw new Error('INVALID_INVENTORY');
     const known=new Set(lots.map(p=>p.id)),fresh=new Map();
     for(const u of data.units){
@@ -132,10 +128,9 @@
   if(!selection)return '';
   const {p,kind}=selection;
   if(kind==='places')return `${p.title}. ${p.description} ${p.note}`;
-  if(!isFresh())return 'Não foi possível consultar as informações comerciais agora. Tente novamente em instantes.';
-  if(kind==='blocks'){const n=[...units.values()].filter(u=>u.block===p.n&&u.status==='disponivel').length;return `Quadra ${p.n}. ${n} lotes disponíveis. Selecione um lote para conhecer seus detalhes.`;}
-  const u=unitFor(p.id);if(!u)return 'Informações deste lote sob consulta.';
-  return `Lote ${p.n}, quadra ${p.block}. ${u.area?`Área de ${decimal.format(u.area)} metros quadrados. `:''}${labels[u.status]}. ${u.price?`Preço de tabela: ${currency.format(u.price)}. `:''}Informações do Évora Enterprise. Valores e disponibilidade sujeitos a confirmação.`;
+  if(kind==='blocks'){const n=[...units.values()].filter(u=>u.block===p.n&&u.status==='disponivel').length;return `Quadra ${p.n}. ${isFresh()?`${n} lotes disponíveis`: `${lots.filter(l=>l.block===p.n).length} lotes identificados`}. Selecione um lote para conhecer seus detalhes.`;}
+  const u=isFresh()?unitFor(p.id):null,area=u?.area||lotAreas[p.id];
+  return `Lote ${p.n}, quadra ${p.block}. ${p.institutional?'Área institucional.':'Lote residencial.'} ${area?`Área de ${decimal.format(area)} metros quadrados. `:''}`;
  }
  function deviceVoice(text,token){
   if(!('speechSynthesis' in window)){finished();audioStatus('A voz está indisponível neste momento. Tente novamente.');return;}
@@ -194,6 +189,41 @@
  };
  $('#inventory-refresh').onclick=()=>loadInventory(true);
  $('#lot-status').onchange=renderLotList;
+ const reservationDialog=$('#reservation-dialog'),reservationForm=$('#reservation-form');
+ let reservationLot=null,reservationId=null,reservationPayload=null,reservationBusy=false,reservationTrigger=null;
+ function closeReservation(){if(!reservationBusy){reservationDialog.close();reservationTrigger?.focus();}}
+ $('#reserve-lot').onclick=()=>{
+  if(!selection||selection.kind!=='lots'||selection.p.institutional)return;
+  stopVoice();stopTour();reservationLot=selection.p;reservationTrigger=document.activeElement;
+  reservationId=crypto.randomUUID();reservationPayload=null;reservationForm.reset();reservationForm.hidden=false;
+  $('#reservation-success').hidden=true;$('#reservation-error').hidden=true;
+  const area=unitFor(reservationLot.id)?.area||lotAreas[reservationLot.id];
+  $('#reservation-lot').textContent=`${lotLabel(reservationLot)} · Quadra ${reservationLot.block}${area?' · '+decimal.format(area)+' m²':''}`;
+  reservationDialog.showModal();$('#reservation-name').focus();
+ };
+ $('#reservation-close').onclick=closeReservation;$('#reservation-done').onclick=closeReservation;
+ reservationDialog.addEventListener('cancel',e=>{if(reservationBusy)e.preventDefault();});
+ reservationDialog.addEventListener('click',e=>{if(e.target===reservationDialog){const r=reservationDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeReservation();}});
+ $('#reservation-phone').addEventListener('input',()=>$('#reservation-phone').setCustomValidity(''));
+ reservationForm.addEventListener('submit',async e=>{
+  e.preventDefault();if(reservationBusy||!reservationLot)return;
+  let phone=$('#reservation-phone').value.replace(/\D/g,'');if(phone.length===13&&phone.startsWith('55'))phone=phone.slice(2);
+  if(!/^[1-9][0-9]9\d{8}$/.test(phone)||/^(\d)\1+$/.test(phone.slice(2))){$('#reservation-phone').setCustomValidity('Informe um celular com DDD, como (34) 99999-9999.');$('#reservation-phone').reportValidity();return;}
+  const name=$('#reservation-name').value.trim().replace(/\s+/g,' ');
+  const key=JSON.stringify([reservationLot.id,name,phone]);
+  if(reservationPayload&&reservationPayload!==key)reservationId=crypto.randomUUID();reservationPayload=key;
+  reservationBusy=true;$('#reservation-submit').disabled=true;$('#reservation-submit').textContent='Enviando solicitação…';$('#reservation-close').disabled=true;$('#reservation-error').hidden=true;
+  try{
+   const result=await api({action:'reservation',id:reservationLot.id,name,phone,requestId:reservationId,consent:true,website:$('#reservation-website').value},AbortSignal.timeout(30000));
+   if(result.status!=='requested'||!/^SOL-[A-F0-9]{10}$/.test(result.protocol))throw new Error('INVALID_RECEIPT');
+   reservationForm.hidden=true;$('#reservation-success').hidden=false;$('#reservation-protocol').textContent='Protocolo '+result.protocol;$('#reservation-done').focus();
+  }catch(error){
+   const messages={RESERVE_LOT_UNAVAILABLE:'Este lote não está disponível para uma nova solicitação. Escolha outro lote.',RESERVE_INVALID:'Confira seu nome e o WhatsApp com DDD.',RESERVE_RATE_LIMIT:'Muitas tentativas. Aguarde um pouco antes de tentar novamente.',RESERVE_ID_CONFLICT:'Os dados deste envio foram alterados. Tente novamente.'};
+   $('#reservation-error').textContent=messages[error.code]||'Não foi possível enviar agora. Seus dados foram mantidos; tente novamente.';$('#reservation-error').hidden=false;
+   if(error.code==='RESERVE_ID_CONFLICT')reservationId=crypto.randomUUID();
+   if(error.code==='RESERVE_LOT_UNAVAILABLE')loadInventory(true);
+  }finally{reservationBusy=false;$('#reservation-submit').disabled=false;$('#reservation-submit').innerHTML='Solicitar reserva '+icon('arrow');$('#reservation-close').disabled=false;}
+ });
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopVoice();music.pause();}else{loadInventory(true);if(musicEnabled)setMusic(true);}});
  window.addEventListener('online',()=>loadInventory(true));
  window.addEventListener('offline',()=>{failed=true;units.clear();loaded=0;stopVoice();renderLotList();paint();renderCommerce();});

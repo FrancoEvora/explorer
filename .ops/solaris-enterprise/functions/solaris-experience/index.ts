@@ -1,8 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
-import { ORG, PROJECT, PRODUCT, publicUnits, narration } from './core.mjs';
+import { ORG, PROJECT, PRODUCT, publicUnits, narration, validateReservation } from './core.mjs';
 import places from './places.json' with { type: 'json' };
 
-const RELEASE='solaris-enterprise-v1';
+const RELEASE='solaris-reservation-v2';
 const BUCKET='solaris-narration';
 const ALLOWED_ORIGINS=new Set(['https://solaris-imersivo.vercel.app','http://localhost:4173']);
 function equal(a:string,b:string){let d=a.length^b.length;for(let i=0;i<512;i++)d|=(a.charCodeAt(i)||0)^(b.charCodeAt(i)||0);return d===0;}
@@ -26,12 +26,25 @@ Deno.serve(async(req:Request)=>{
   // Publishable-key authentication matches the Enterprise Bia gateway. No browser secret.
   if(!authorized(req))return json({error:'UNAUTHORIZED'},401);
   try{
-    if(Number(req.headers.get('content-length'))>1024)throw new PublicError('INVALID_INPUT',400);
-    const raw=await req.text();if(raw.length>1024)throw new PublicError('INVALID_INPUT',400);
+    if(Number(req.headers.get('content-length'))>2048)throw new PublicError('INVALID_INPUT',400);
+    const raw=await req.text();if(raw.length>2048)throw new PublicError('INVALID_INPUT',400);
     let body;try{body=JSON.parse(raw);}catch{throw new PublicError('INVALID_INPUT',400);}
-    if(!body||typeof body!=='object'||!['inventory','speech'].includes(body.action)||Object.keys(body).some(k=>!['action','id'].includes(k)))throw new PublicError('INVALID_INPUT',400);
+    if(!body||typeof body!=='object'||!['inventory','speech','reservation'].includes(body.action)||Object.keys(body).some(k=>!(body.action==='reservation'?['action','id','name','phone','requestId','consent','website']:['action','id']).includes(k)))throw new PublicError('INVALID_INPUT',400);
     if(body.action==='speech'&&(typeof body.id!=='string'||body.id.length>40||!(/^(lote-[a-j]-(?:0[1-9]|[1-9][0-9])|quadra-[a-j])$/.test(body.id)||places.some(p=>p.id===body.id))))throw new PublicError('INVALID_SELECTION',400);
     const admin=createClient(Deno.env.get('SUPABASE_URL')!,serviceKey(),{auth:{persistSession:false,autoRefreshToken:false}});
+    if(body.action==='reservation'){
+      const submission=validateReservation(body);
+      if(!submission)throw new PublicError('RESERVE_INVALID',400);
+      const address=(req.headers.get('x-forwarded-for')||req.headers.get('cf-connecting-ip')||'unknown').split(',')[0].trim().slice(0,128);
+      const fingerprint=await digest(`solaris-reserve:${Math.floor(Date.now()/3600000)}:${address}`);
+      const result=await admin.rpc('submit_solaris_lot_request',{p_submission:submission,p_fingerprint:fingerprint});
+      if(result.error){
+        const code=String(result.error.message).match(/\bRESERVE_[A-Z_]+\b/)?.[0]||'RESERVE_UNAVAILABLE';
+        throw new PublicError(code,code==='RESERVE_RATE_LIMIT'?429:code==='RESERVE_INVALID'?400:code==='RESERVE_LOT_UNAVAILABLE'||code==='RESERVE_ID_CONFLICT'?409:503);
+      }
+      if(!result.data?.protocol||!result.data?.requestId)throw new PublicError('RESERVE_UNAVAILABLE');
+      return json({requestId:result.data.requestId,protocol:result.data.protocol,status:'requested'},result.data.duplicate?200:201);
+    }
     const now=new Date().toISOString();
     const [inventory,reservations]=await Promise.all([
       admin.from('crm_inventory_units').select('id,block_code,lot_number,area,status,list_price,price_per_sqm').eq('organization_id',ORG).eq('project_id',PROJECT).eq('product_id',PRODUCT).eq('active',true).limit(500),
