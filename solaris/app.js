@@ -101,7 +101,7 @@ function changeTab(next){
 }
 function setLayers(){
  const technical=tab!=='places';$('#technical-wrap').hidden=false;$('#technical-wrap').setAttribute('aria-hidden',String(!technical));$('#masterplan').hidden=false;$('#masterplan').setAttribute('aria-hidden',String(technical));$('#portaria-implantacao').style.display=technical?'none':'';
- $('#markers').hidden=!pointsVisible||technical;$('#marker-leaders').hidden=!pointsVisible||technical;$('#lot-status-symbols').style.visibility=pointsVisible&&technical?'visible':'hidden';$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&technical?'visible':'hidden';
+ $('#markers').hidden=!pointsVisible||technical;$('#marker-leaders').style.visibility=!pointsVisible||technical?'hidden':'visible';$('#lot-status-symbols').style.visibility=pointsVisible&&technical?'visible':'hidden';$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&technical?'visible':'hidden';
  stage.classList.toggle('show-blocks',tab==='blocks'&&pointsVisible);stage.classList.toggle('show-lots',technical&&pointsVisible);map.classList.toggle('technical-mode',technical);
  $('#map-mode-label').innerHTML=technical?'Modo planta':'<i></i> IMPLANTAÇÃO INTERATIVA';
  $('#layers-btn').setAttribute('aria-pressed',pointsVisible);$('#layers-btn').lastElementChild.textContent=pointsVisible?'Pontos visíveis':'Mostrar pontos';updateSelection();layoutPlaceMarkers();window.SolarisExperience?.paint();
