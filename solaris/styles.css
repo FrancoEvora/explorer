@@ -104,3 +104,68 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}.header,.workspace,.foo
 
 /* Navigation for the complete environment gallery. */
 .gallery-navigation{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}.gallery-navigation #gallery-count{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}.gallery-navigation .gallery-dots{flex-wrap:wrap;justify-content:center;gap:3px}.gallery-navigation .gallery-dots button{flex-shrink:0}@media(max-width:600px){.gallery-navigation{width:100%}.gallery-bottom>.outline-button{margin-left:auto}.gallery-bottom{gap:10px}.gallery-navigation .gallery-dots{flex:initial}}
+
+
+/* Screen-space labels, clustered at overview scale. */
+#markers{position:absolute;inset:0;transform:none;pointer-events:none;z-index:3}
+#markers .map-marker{position:absolute;transform:none;transform-origin:center;pointer-events:auto;min-height:34px;padding:7px 10px;font-size:11px;gap:6px;max-width:180px;transition:background .2s,border-color .2s}
+#markers .map-marker span{white-space:nowrap;max-width:none;line-height:1.3}
+#markers .map-marker .icon{width:16px;height:16px;flex-shrink:0}
+#markers .marker-cluster{background:#213d2d;border-color:#e0c78b99}
+.marker-cluster b{display:inline-grid;place-items:center;background:var(--accent);color:#183122;border-radius:50%;width:20px;height:20px;margin-left:4px}
+#marker-leaders{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
+#marker-leaders path{stroke:#eddfb5b3;stroke-width:1.2;fill:none}#marker-leaders circle{fill:#f0dba7;stroke:#20372c;stroke-width:1}
+/* Both images remain mounted for a gentle crossfade. */
+#masterplan,.technical-image-wrap{transition:opacity .42s ease;pointer-events:none}
+#masterplan{opacity:1}.technical-image-wrap{opacity:0}
+.technical-mode #masterplan{opacity:0}.technical-mode .technical-image-wrap{opacity:1}
+.technical-mode #map-mode-label{color:#f4dfab;font-weight:700;font-size:11px;letter-spacing:.5px}
+/* Availability is conveyed by shape and text as well as color. */
+.lot-choice .lot-number{line-height:1.2}.lot-choice[data-status=vendido] .lot-number{text-decoration:line-through;text-decoration-thickness:2px}
+.lot-status-icon{position:absolute;right:2px;top:2px;display:flex;align-items:center;justify-content:center;color:var(--status-color)}
+.lot-status-icon .icon{width:12px;height:12px;stroke-width:2.4}
+.availability-badge[data-status=vendido],.inventory-legend [data-status=vendido]{text-decoration:line-through;text-decoration-thickness:1.5px}
+.availability-badge[data-status=reservado]:after,.inventory-legend [data-status=reservado]:after{content:'';width:11px;height:12px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2.5' d='M6 10h12v11H6z M8 10V7a4 4 0 018 0v3'/%3E%3C/svg%3E") center/contain no-repeat;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2.5' d='M6 10h12v11H6z M8 10V7a4 4 0 018 0v3'/%3E%3C/svg%3E") center/contain no-repeat}
+#lot-status-symbols{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.lot-status-mark{display:none}.parcel-symbols-visible .lot-status-mark[data-status=reservado],.parcel-symbols-visible .lot-status-mark[data-status=vendido],.parcel-symbols-visible .lot-status-mark[data-status=bloqueado],.parcel-symbols-visible .lot-status-mark[data-status=indisponivel]{display:block}
+.lot-status-glyph{transform:scale(var(--marker-scale,1))}.lot-status-glyph circle{fill:#10231ee0;stroke:var(--status-color);stroke-width:1}
+.lot-status-glyph path{display:none;fill:none;stroke:var(--status-color);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+[data-status=reservado] .reserved-mark,[data-status=vendido] .sold-mark,[data-status=bloqueado] .unavailable-mark,[data-status=indisponivel] .unavailable-mark{display:block}
+.show-lots .lot-polygon.selected{fill:#f3bf528c;stroke:#fff5c4;stroke-width:3.5;paint-order:stroke fill}
+/* The header has its own space: narration cannot cover the lot grid. */
+.detail-header{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 10px;flex-shrink:0}
+.detail-heading{flex:1;min-width:0}.detail-copy .detail-header h2{margin:0;font-size:20px;line-height:1.2}
+.detail-heading .eyebrow{display:block;margin:0 0 7px}.detail-header .close-btn{position:static;flex:0 0 28px;width:28px;height:28px;align-self:flex-start;background:#17392cb3}
+.detail-header #read-selection{order:initial;align-self:center;margin:0;flex:0 0 auto;max-width:none;min-height:32px;padding:5px 7px;white-space:nowrap;font-size:10px}
+.detail-panel.block-detail{display:flex;flex-direction:column;overflow:hidden;width:340px}
+.block-detail .detail-copy{display:flex;flex-flow:column nowrap;align-items:stretch;flex:1;min-height:0;padding:14px}
+.block-detail .detail-body{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:0 2px 3px}
+.block-detail .detail-header h2{font-size:18px;margin:0}.block-detail .detail-heading{min-width:0}
+.block-detail .detail-header #read-selection{margin:0;align-self:center}
+.block-detail #commercial-info{margin:0 0 8px}.block-detail #reserve-lot{display:flex;width:100%;margin:0 0 8px}
+.block-detail #detail-lots{width:100%;margin:0}.block-detail #detail-lots:has(.lot-pagination){flex:initial}
+.block-sheet{height:min(280px,50%)}
+.block-sheet .detail-body{display:flex;flex-direction:column;overflow:hidden;flex:1}
+.block-sheet #commercial-info{flex-shrink:0}.block-sheet #detail-lots{display:flex;flex-direction:column;flex:1;min-height:0}
+.block-sheet #detail-lots>.lot-grid{max-height:none;min-height:0;overflow:auto;overscroll-behavior:contain;scroll-padding:8px;padding:3px 3px 10px}
+.block-sheet #detail-lots>.lot-detail-label{flex-shrink:0;font-size:11px;margin:0 0 5px}
+.block-sheet .lot-choice{min-height:40px}
+.lot-pricing{margin:7px 0 5px;display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:0 7px}
+.lot-pricing .price-label{font-size:11px;color:#c5d5c5}.lot-pricing .lot-price{font-size:21px;letter-spacing:-.4px}.lot-pricing .price-note{grid-column:1/-1;color:#aebeb2;font-size:9px;line-height:1.4;margin-top:2px}
+.scene-card strong{white-space:normal;overflow:visible;text-overflow:clip;font-size:13px;line-height:1.2}
+.scene-card small{font-size:8px;letter-spacing:.8px}
+@media(max-width:600px){
+ #markers .map-marker{font-size:10px;min-height:32px;padding:6px 8px;max-width:155px}
+ .detail-header{gap:6px}.detail-copy .detail-header h2{font-size:18px}
+ .detail-panel.block-detail{left:12px;right:12px;top:auto;bottom:72px;width:auto;border-radius:14px;max-height:56%}
+ .detail-panel.block-sheet{height:min(240px,42%);max-height:42%}
+ .block-detail .detail-copy{padding:10px 12px}.block-detail .detail-header{margin-bottom:8px}
+ .block-detail .detail-header h2{font-size:17px}.detail-header #read-selection{font-size:9px;gap:4px;padding:4px 5px;min-height:30px}
+ .detail-header .close-btn{width:26px;height:26px;flex-basis:26px}.detail-header .close-btn .icon{width:15px;height:15px}
+ .block-sheet .lot-choice{min-height:38px}.block-detail .lot-size{font-size:21px}.lot-pricing .lot-price{font-size:20px}
+ .block-detail .detail-body{padding-bottom:4px}.block-detail .lot-characteristics{font-size:11px}
+ .scene-card{flex-basis:220px}.scene-card strong{font-size:13px}.scene-card small{font-size:8px}
+ .detail-panel:not(.block-detail) .detail-header{flex-wrap:wrap}.detail-panel:not(.block-detail) .detail-heading{flex-basis:100%}
+}
+@media(max-height:500px) and (max-width:1000px){.detail-panel.block-detail{left:auto;right:12px;top:65px;bottom:12px;width:310px;max-height:calc(100% - 80px)}.detail-panel.block-sheet{height:auto}.block-detail .detail-header h2{font-size:16px}}
+@media(prefers-reduced-motion:reduce){#masterplan,.technical-image-wrap{transition:none}}

@@ -27,8 +27,10 @@
    const status=statusFor(p.id),label=`Quadra ${p.block}, lote ${String(p.n).padStart(2,'0')}. ${labels[status]}`;
    el.dataset.status=status;el.setAttribute('aria-label',label);
    if(el.matches('polygon'))el.setAttribute('tabindex',tab!=='places'&&pointsVisible?'0':'-1');
+   const mark=el.querySelector('.lot-status-icon');if(mark){mark.hidden=!['reservado','bloqueado','indisponivel'].includes(status);mark.innerHTML=status==='reservado'?icon('lock'):'—';}
    const title=el.querySelector('title');if(title)title.textContent=label;
   });
+  $$('[data-status-lot]').forEach(el=>el.dataset.status=statusFor(el.dataset.statusLot));
   const available=isFresh()?[...units.values()].filter(u=>u.status==='disponivel').length:null;
   $('#inventory-summary').textContent=available===null?(failed?'Consulta indisponível. Tente novamente.':'Consultando Évora Enterprise…'):`${available} lotes disponíveis · Évora Enterprise`;
   $('#inventory-refresh').hidden=!failed;
@@ -49,10 +51,16 @@
   }
   const u=isFresh()?unitFor(p.id):null,area=u?.area||lotAreas[p.id],status=p.institutional?'institucional':statusFor(p.id);
   reserve.disabled=isFresh()&&status!=='disponivel';
-  reserve.setAttribute('aria-label',`Reservar ${lotLabel(p)}, quadra ${p.block}`);
+  reserve.setAttribute('aria-label',`Saber mais sobre ${lotLabel(p)}, quadra ${p.block}`);
   const row=line('div','','commercial-row');
   if(area)line('strong',`${decimal.format(area)} m²`,'lot-size',row);
   const badge=line('span',labels[status],'availability-badge',row);badge.dataset.status=status;
+  if(!p.institutional){
+   const price=u?.price||(u?.pricePerSqm&&area?u.pricePerSqm*area:null);
+   const pricing=line('div','','lot-pricing');
+   if(price&&status==='disponivel'){line('span','A partir de','price-label',pricing);line('strong',currency.format(price),'lot-price',pricing);line('small','Preço de tabela · condições a confirmar','price-note',pricing);}
+   else line('span',status==='vendido'?'Lote vendido':status==='reservado'?'Lote reservado':'Valor sob consulta','price-label',pricing);
+  }
   line('p',p.institutional?'Área institucional':`Lote residencial · Quadra ${p.block}`,'lot-characteristics');
   $('#detail-text').hidden=true;
  }
@@ -222,7 +230,7 @@
    $('#reservation-error').textContent=messages[error.code]||'Não foi possível enviar agora. Seus dados foram mantidos; tente novamente.';$('#reservation-error').hidden=false;
    if(error.code==='RESERVE_ID_CONFLICT')reservationId=crypto.randomUUID();
    if(error.code==='RESERVE_LOT_UNAVAILABLE')loadInventory(true);
-  }finally{reservationBusy=false;$('#reservation-submit').disabled=false;$('#reservation-submit').innerHTML='Solicitar reserva '+icon('arrow');$('#reservation-close').disabled=false;}
+  }finally{reservationBusy=false;$('#reservation-submit').disabled=false;$('#reservation-submit').innerHTML='Quero saber mais '+icon('arrow');$('#reservation-close').disabled=false;}
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopVoice();music.pause();}else{loadInventory(true);if(musicEnabled)setMusic(true);}});
  window.addEventListener('online',()=>loadInventory(true));
@@ -240,3 +248,4 @@
  if(active){const p=lots.find(p=>p.id===active)||blocks.find(p=>p.id===active)||places.find(p=>p.id===active);if(p)window.SolarisExperience.show(p,tab);}
  loadInventory(true);setInterval(()=>{if(!document.hidden)loadInventory(true);},60000);
 })();
+

@@ -1,6 +1,6 @@
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const paths={map:'M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5z M9 3v16 M15 5v16',image:'M4 3h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z M3 16l5-5 6 6 3-3 4 4 M15 8h.01',play:'M8 4l12 8-12 8z',pause:'M8 5v14 M16 5v14',help:'M9 9a3 3 0 016 0c0 2-3 2-3 4 M12 17h.01 M22 12a10 10 0 11-20 0 10 10 0 0120 0',plus:'M12 5v14 M5 12h14',minus:'M5 12h14',focus:'M8 3H3v5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M9 9h6v6H9z',expand:'M8 3H3v5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M3 3l6 6 M21 3l-6 6 M21 21l-6-6 M3 21l6-6',collapse:'M9 3v6H3 M15 3v6h6 M15 21v-6h6 M9 21v-6H3',close:'M6 6l12 12 M18 6L6 18',arrow:'M5 12h14 M13 6l6 6-6 6',right:'M9 5l7 7-7 7',left:'M15 5l-7 7 7 7',layers:'M12 3L2 8l10 5 10-5-10-5z M2 12l10 5 10-5 M2 16l10 5 10-5',perspective:'M3 8l14-5 4 13-14 5L3 8z M3 8l18 8 M17 3L7 21',hand:'M8 12V6a2 2 0 014 0v5 M12 10V4a2 2 0 014 0v7 M16 10V6a2 2 0 014 0v9c0 5-3 7-7 7-3 0-5-2-7-5l-3-5a2 2 0 013-2l2 2',list:'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',compass:'M22 12a10 10 0 11-20 0 10 10 0 0120 0 M16 8l-3 5-5 3 3-5 5-3z',pin:'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0 M15 10a3 3 0 11-6 0 3 3 0 016 0',gate:'M3 21V7l9-4 9 4v14 M3 8h18 M7 8v13 M17 8v13 M7 15h10 M11 15v6 M14 15v6',tree:'M12 3l6 7h-3l5 6h-7v5h-2v-5H4l5-6H6l6-7z',water:'M2 17c2-3 4 3 6 0s4 3 6 0 4 3 8 0 M2 21c2-3 4 3 6 0s4 3 6 0 4 3 8 0 M12 2S7 8 7 10a5 5 0 0010 0c0-2-5-8-5-8z',truck:'M2 5h12v12H2V5z M14 9h4l4 4v4h-8 M4 17a2 2 0 104 0 M16 17a2 2 0 104 0 M18 9v4h4',leaf:'M20 3C8 1 2 7 5 15c8 5 16-2 15-12z M3 21l12-13',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',keyboard:'M3 5h18v14H3z M6 9h.01 M10 9h.01 M14 9h.01 M18 9h.01 M6 12h.01 M10 12h.01 M14 12h.01 M18 12h.01 M8 16h8'};
+const paths={lock:'M6 10h12v11H6z M8 10V7a4 4 0 018 0v3 M12 14v3',map:'M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5z M9 3v16 M15 5v16',image:'M4 3h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z M3 16l5-5 6 6 3-3 4 4 M15 8h.01',play:'M8 4l12 8-12 8z',pause:'M8 5v14 M16 5v14',help:'M9 9a3 3 0 016 0c0 2-3 2-3 4 M12 17h.01 M22 12a10 10 0 11-20 0 10 10 0 0120 0',plus:'M12 5v14 M5 12h14',minus:'M5 12h14',focus:'M8 3H3v5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M9 9h6v6H9z',expand:'M8 3H3v5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M3 3l6 6 M21 3l-6 6 M21 21l-6-6 M3 21l6-6',collapse:'M9 3v6H3 M15 3v6h6 M15 21v-6h6 M9 21v-6H3',close:'M6 6l12 12 M18 6L6 18',arrow:'M5 12h14 M13 6l6 6-6 6',right:'M9 5l7 7-7 7',left:'M15 5l-7 7 7 7',layers:'M12 3L2 8l10 5 10-5-10-5z M2 12l10 5 10-5 M2 16l10 5 10-5',perspective:'M3 8l14-5 4 13-14 5L3 8z M3 8l18 8 M17 3L7 21',hand:'M8 12V6a2 2 0 014 0v5 M12 10V4a2 2 0 014 0v7 M16 10V6a2 2 0 014 0v9c0 5-3 7-7 7-3 0-5-2-7-5l-3-5a2 2 0 013-2l2 2',list:'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',compass:'M22 12a10 10 0 11-20 0 10 10 0 0120 0 M16 8l-3 5-5 3 3-5 5-3z',pin:'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0 M15 10a3 3 0 11-6 0 3 3 0 016 0',gate:'M3 21V7l9-4 9 4v14 M3 8h18 M7 8v13 M17 8v13 M7 15h10 M11 15v6 M14 15v6',tree:'M12 3l6 7h-3l5 6h-7v5h-2v-5H4l5-6H6l6-7z',water:'M2 17c2-3 4 3 6 0s4 3 6 0 4 3 8 0 M2 21c2-3 4 3 6 0s4 3 6 0 4 3 8 0 M12 2S7 8 7 10a5 5 0 0010 0c0-2-5-8-5-8z',truck:'M2 5h12v12H2V5z M14 9h4l4 4v4h-8 M4 17a2 2 0 104 0 M16 17a2 2 0 104 0 M18 9v4h4',leaf:'M20 3C8 1 2 7 5 15c8 5 16-2 15-12z M3 21l12-13',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',keyboard:'M3 5h18v14H3z M6 9h.01 M10 9h.01 M14 9h.01 M18 9h.01 M6 12h.01 M10 12h.01 M14 12h.01 M18 12h.01 M8 16h8'};
 const icon=name=>`<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name]||paths.pin}"/></svg>`;
 function icons(root=document){root.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));}icons();
 const sourceScenes=[
@@ -15,22 +15,25 @@ const sourceScenes=[
   {id:'acesso',name:'Acesso ao Parque das Árvores',tag:'Chegada ao bairro planejado',x:.927,y:.392,z:2.55,info:'Perspectiva ilustrativa do acesso público ao bairro, com avenida arborizada, calçadas e marco de entrada. A Portaria do Solaris está identificada em outro ponto do mapa.'},
   {id:'parque',name:'Parque das Árvores',tag:'Bairro planejado',x:.751,y:.283,z:2,info:'Explore as quadras do Bairro Parque das Árvores integradas ao conjunto.'}
 ];
-const places=sourceScenes.filter(p=>p.id!=='geral').map(p=>({id:p.id,title:p.name,short:({bosque:'Bosque e caminhada',quadras:'Quadras esportivas',parque:'Parque das Árvores'})[p.id]||p.name,subtitle:p.tag,icon:({portaria:'gate',praca:'leaf',bosque:'tree',lago:'water',clube:'water',quadras:'grid',hipica:'leaf',acesso:'pin',parque:'tree'})[p.id],x:p.x*100,y:p.y*100,zoom:p.z,kicker:p.tag.toUpperCase(),image:'assets/ambientes/'+(p.id==='acesso'?'acesso-parque':p.id)+'.webp',description:({portaria:'Uma perspectiva da chegada ao Solaris, com recepção, cobertura de acesso e paisagismo integrado.',clube:'Clube e piscinas em uma nova perspectiva, com espaços de descanso e convivência em meio ao verde.',lago:'Uma perspectiva do lago com deck de madeira, pergolado e espaços de estar à beira d’água.',praca:'Caminhos de pedra, bancos e pergolados compõem esta perspectiva dos espaços de convivência.',bosque:'Uma perspectiva da caminhada entre árvores, com trilha e bancos integrados à paisagem.',quadras:'Quadras de tênis e de areia, cercadas por vegetação e áreas de descanso.',hipica:'Uma perspectiva do centro hípico, com arena de areia e arquitetura em pedra e madeira.',parque:'Uma visão conceitual dos caminhos, jardins e espaços de encontro do Parque das Árvores.',acesso:'Avenida arborizada, calçadas acessíveis e marco em pedra compõem esta perspectiva ilustrativa da chegada ao bairro.'})[p.id]||p.info,tags:[p.tag],note:'Perspectiva ilustrativa. Consulte o projeto para as características definitivas.'}));
+const places=sourceScenes.filter(p=>p.id!=='geral').map(p=>({id:p.id,title:p.name,short:({bosque:'Bosque',clube:'Clube',quadras:'Quadras',acesso:'Acesso ao Parque',hipica:'Hípica',parque:'Parque das Árvores'})[p.id]||p.name,subtitle:p.tag,icon:({portaria:'gate',praca:'leaf',bosque:'tree',lago:'water',clube:'water',quadras:'grid',hipica:'leaf',acesso:'pin',parque:'tree'})[p.id],x:p.x*100,y:p.y*100,zoom:p.z,kicker:p.tag.toUpperCase(),image:'assets/ambientes/'+(p.id==='acesso'?'acesso-parque':p.id)+'.webp',description:({portaria:'Uma perspectiva da chegada ao Solaris, com recepção, cobertura de acesso e paisagismo integrado.',clube:'Clube e piscinas em uma nova perspectiva, com espaços de descanso e convivência em meio ao verde.',lago:'Uma perspectiva do lago com deck de madeira, pergolado e espaços de estar à beira d’água.',praca:'Caminhos de pedra, bancos e pergolados compõem esta perspectiva dos espaços de convivência.',bosque:'Uma perspectiva da caminhada entre árvores, com trilha e bancos integrados à paisagem.',quadras:'Quadras de tênis e de areia, cercadas por vegetação e áreas de descanso.',hipica:'Uma perspectiva do centro hípico, com arena de areia e arquitetura em pedra e madeira.',parque:'Uma visão conceitual dos caminhos, jardins e espaços de encontro do Parque das Árvores.',acesso:'Avenida arborizada, calçadas acessíveis e marco em pedra compõem esta perspectiva ilustrativa da chegada ao bairro.'})[p.id]||p.info,tags:[p.tag],note:'Perspectiva ilustrativa. Consulte o projeto para as características definitivas.'}));
 const scenePlaces=[{id:'aerea',title:'Visão aérea do Solaris',image:'assets/masterplan.webp',description:'Uma visão do conjunto: áreas residenciais, clube, lago, bosque e centro hípico.'},...places.filter(p=>p.image).flatMap(p=>p.id==='portaria'?[p,{id:'portaria-alameda',placeId:'portaria',title:'Portaria · Alameda de chegada',image:'assets/ambientes/portaria-alameda.webp',description:'A alameda de palmeiras conduz à portaria nesta segunda perspectiva da chegada ao Solaris.'}]:[p])],tourOrder=['portaria','clube','quadras','praca','bosque','lago','hipica','acesso','parque'];
 let active=null,tab='places',pointsVisible=true,tilted=false,presenting=false,toastTimer;
 const stage=$('#map-stage'),map=$('#map'),image=$('#masterplan');
 const camera={x:0,y:0,s:1,min:.1,max:4},size={w:1448,h:1086};let animation=0,resizePending=0;
-function draw(){stage.style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.s})${tilted?' perspective(1700px) rotateX(18deg)':''}`;stage.style.setProperty('--marker-scale',1/camera.s);$('#zoom-label').textContent=Math.round(camera.s/camera.min*100)+'%';$('#zoom-in').disabled=camera.s>=camera.max-.01;$('#zoom-out').disabled=camera.s<=camera.min+.001;}
+function draw(){stage.style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.s})${tilted?' perspective(1700px) rotateX(18deg)':''}`;stage.style.setProperty('--marker-scale',1/camera.s);$('#zoom-label').textContent=Math.round(camera.s/camera.min*100)+'%';$('#zoom-in').disabled=camera.s>=camera.max-.01;$('#zoom-out').disabled=camera.s<=camera.min+.001;map.classList.toggle('parcel-symbols-visible',camera.s/camera.min>=2.4);layoutPlaceMarkers();}
 function bounds(x,y,s){const w=map.clientWidth,h=map.clientHeight,pad=Math.min(w,h)*.38;return{x:Math.max(-size.w*s+pad,Math.min(w-pad,x)),y:Math.max(-size.h*s+pad,Math.min(h-pad,y))};}
 function move(x,y,s,animate=false){cancelAnimationFrame(animation);s=Math.min(camera.max,Math.max(camera.min,s));({x,y}=bounds(x,y,s));if(!animate||matchMedia('(prefers-reduced-motion: reduce)').matches){Object.assign(camera,{x,y,s});draw();return;}const from={...camera},start=performance.now();const tick=t=>{const p=Math.min((t-start)/650,1),e=1-Math.pow(1-p,3);camera.x=from.x+(x-from.x)*e;camera.y=from.y+(y-from.y)*e;camera.s=from.s+(s-from.s)*e;draw();if(p<1)animation=requestAnimationFrame(tick);};animation=requestAnimationFrame(tick);}
 function fit(animate=true){const pad=matchMedia('(max-width:600px)').matches?25:36,w=map.clientWidth,h=map.clientHeight;camera.min=Math.min((w-pad*2)/size.w,(h-pad*2)/size.h);camera.max=Math.max(3.2,camera.min*12);move((w-size.w*camera.min)/2,(h-size.h*camera.min)/2,camera.min,animate);}
 function zoom(factor,px=map.clientWidth/2,py=map.clientHeight/2){const ns=Math.min(camera.max,Math.max(camera.min,camera.s*factor)),r=ns/camera.s;move(px-(px-camera.x)*r,py-(py-camera.y)*r,ns);}
 function focus(p){
- const isMobile=map.clientWidth<600,ns=camera.min*(p.block&&!isMobile?5.5:p.zoom);
- let cx=map.clientWidth*(isMobile?.5:.39),cy=map.clientHeight*(isMobile?.32:.49);
- if(tab!=='places'&&matchMedia('(max-width:600px) and (min-height:501px)').matches&&!$('#detail-panel').hidden){
-  const heading=$('.map-heading'),top=heading.offsetTop+heading.offsetHeight+45,bottom=$('#detail-panel').offsetTop-20;
-  cy=Math.max(top,top+(bottom-top)/2);
+ const mobile=map.clientWidth<600,panel=$('#detail-panel');
+ let ns=camera.min*(p.block&&!mobile?5.5:p.zoom),cx=map.clientWidth*(mobile?.5:.39),cy=map.clientHeight*(mobile?.32:.49);
+ if(tab!=='places'&&mobile&&!panel.hidden){
+  const heading=$('.map-heading'),top=heading.offsetTop+heading.offsetHeight+18,bottom=panel.offsetTop-18;
+  const freeHeight=Math.max(70,bottom-top);cy=top+freeHeight/2;
+  if(p.poly){const coords=p.poly.trim().split(/\s+/).map(v=>v.split(',').map(Number));const xs=coords.map(v=>v[0]),ys=coords.map(v=>v[1]);
+   ns=Math.min(ns,(map.clientWidth-56)/(Math.max(...xs)-Math.min(...xs)),freeHeight/(Math.max(...ys)-Math.min(...ys)+20));
+  }
  }
  move(cx-p.x/100*size.w*ns,cy-p.y/100*size.h*ns,ns,true);
 }
@@ -38,12 +41,42 @@ function listPlace(p){return`<button class="place-item" data-place="${p.id}" ari
 $('#places-list').innerHTML=places.map(listPlace).join('');
 $('#blocks-list').innerHTML=blocks.map(b=>`<button class="place-item" data-block="${b.id}" aria-pressed="false"><span class="place-icon block-number">${b.n}</span><span class="place-label"><strong>Quadra ${b.n}</strong><small>${b.position}</small></span>${icon('right')}</button>`).join('');
 $('#markers').innerHTML=places.map(p=>`<button class="map-marker" data-place="${p.id}" style="left:${p.x}%;top:${p.y}%" aria-label="Explorar ${p.title}" aria-pressed="false">${icon(p.icon)}<span>${p.short}</span></button>`).join('');
+// Labels use screen coordinates so they remain readable at every zoom level.
+const clusterIds=['clube','quadras','portaria','praca'];
+$('#markers').insertAdjacentHTML('beforeend',`<button class="map-marker marker-cluster" id="amenity-cluster" aria-label="Aproximar Clube, Quadras, Portaria e Praça">${icon('layers')}<span>Lazer e chegada <b>4</b></span></button>`);
+$('#amenity-cluster').onclick=()=>{stopTour();closeDetails();focus({x:60,y:46.7,zoom:5});};
+function layoutPlaceMarkers(){
+ if(!$('#amenity-cluster'))return;
+ const group=camera.s/camera.min<2.4&&!clusterIds.includes(active),w=map.clientWidth,h=map.clientHeight;
+ const entries=places.filter(p=>!group||!clusterIds.includes(p.id)).map(p=>({p,el:$('#markers [data-place="'+p.id+'"]')}));
+ for(const p of places)$('#markers [data-place="'+p.id+'"]').hidden=group&&clusterIds.includes(p.id);
+ const cluster=$('#amenity-cluster');cluster.hidden=!group;
+ if(group)entries.push({p:{x:60,y:46.7},el:cluster});
+ entries.sort((a,b)=>a.p.id===active?-1:b.p.id===active?1:a.p.y-b.p.y);
+ const placed=[],lines=[];const heading=$('.map-heading');
+ const minY=heading.offsetTop+heading.offsetHeight+12,maxY=Math.max(minY,h-78);
+ for(const {p,el} of entries){
+  const ax=camera.x+p.x/100*size.w*camera.s,ay=camera.y+p.y/100*size.h*camera.s;
+  const outside=ax<0||ax>w||ay<0||ay>h;el.hidden=outside;if(outside)continue;
+  const ew=el.offsetWidth,eh=el.offsetHeight,candidates=[];
+  for(const dy of [-eh/2,-eh-14,14,-eh-58,58,-eh-102,102])for(const dx of [12,-ew-12,-ew/2]){
+   const x=Math.max(10,Math.min(w-ew-10,ax+dx)),y=Math.max(minY,Math.min(maxY-eh,ay+dy));
+   const overlaps=placed.reduce((n,r)=>n+(x<r.x+r.w+8&&x+ew+8>r.x&&y<r.y+r.h+7&&y+eh+7>r.y?1:0),0);
+   candidates.push({x,y,w:ew,h:eh,score:overlaps*100000+Math.hypot(x+ew/2-ax,y+eh/2-ay)});
+  }
+  candidates.sort((a,b)=>a.score-b.score);const best=candidates[0];placed.push(best);
+  el.style.left=best.x+'px';el.style.top=best.y+'px';
+  lines.push(`<path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${(best.x+best.w/2).toFixed(1)} ${(best.y+best.h/2).toFixed(1)}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3"/>`);
+ }
+ $('#marker-leaders').innerHTML=lines.join('');
+}
 $('#block-markers').innerHTML=blocks.map(b=>`<button class="block-marker" data-block="${b.id}" style="left:${b.x}%;top:${b.y}%" aria-label="Explorar quadra ${b.n}" aria-pressed="false">Quadra <span>${b.n}</span></button>`).join('');
 $('#block-layer').innerHTML=blocks.map(b=>`<polygon class="block-polygon" data-block="${b.id}" points="${b.poly}"><title>Quadra ${b.n}</title></polygon>`).join('');
 const lotLabel=p=>`Lote ${String(p.n).padStart(2,'0')}`;
-const lotButton=p=>`<button class="lot-choice${p.institutional?' institutional':''}" data-lot="${p.id}" aria-pressed="${active===p.id}" aria-label="Selecionar quadra ${p.block}, lote ${String(p.n).padStart(2,'0')}${p.institutional?', institucional':''}">${String(p.n).padStart(2,'0')}${p.institutional?'<small>INST.</small>':''}</button>`;
+const lotButton=p=>`<button class="lot-choice${p.institutional?' institutional':''}" data-lot="${p.id}" aria-pressed="${active===p.id}" aria-label="Selecionar quadra ${p.block}, lote ${String(p.n).padStart(2,'0')}${p.institutional?', institucional':''}"><span class="lot-number">${String(p.n).padStart(2,'0')}</span><span class="lot-status-icon" aria-hidden="true" hidden></span>${p.institutional?'<small>INST.</small>':''}</button>`;
 $('#lot-block').insertAdjacentHTML('beforeend',blocks.map(b=>`<option value="${b.n}">Quadra ${b.n}</option>`).join(''));
 $('#lot-layer').innerHTML=lots.map(p=>`<polygon class="lot-polygon${p.institutional?' institutional':''}" data-lot="${p.id}" role="button" tabindex="-1" points="${p.poly}"><title>Quadra ${p.block} · ${lotLabel(p)}${p.institutional?' · Institucional':''}</title></polygon>`).join('');
+$('#lot-status-symbols').innerHTML=lots.map(p=>`<g class="lot-status-mark" data-status-lot="${p.id}" transform="translate(${p.x/100*size.w} ${p.y/100*size.h})"><g class="lot-status-glyph"><circle r="8"/><path class="reserved-mark" d="M-4-1h8v6h-8z M-3-1v-3a3 3 0 016 0v3"/><path class="sold-mark" d="M-5 4L5-4"/><path class="unavailable-mark" d="M-4 0h8"/></g></g>`).join('');
 function renderLotList(){
  const block=$('#lot-block').value,q=$('#lot-search').value.toUpperCase().replace(/QUADRA|LOTE/g,'').replace(/[^A-Z0-9]/g,'');
  const status=$('#lot-status').value;
@@ -67,15 +100,15 @@ function changeTab(next){
  setLayers();
 }
 function setLayers(){
- const technical=tab!=='places';$('#technical-wrap').hidden=!technical;$('#masterplan').hidden=technical;$('#portaria-implantacao').style.display=technical?'none':'';
- $('#markers').hidden=!pointsVisible||technical;$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&technical?'visible':'hidden';
+ const technical=tab!=='places';$('#technical-wrap').hidden=false;$('#technical-wrap').setAttribute('aria-hidden',String(!technical));$('#masterplan').hidden=false;$('#masterplan').setAttribute('aria-hidden',String(technical));$('#portaria-implantacao').style.display=technical?'none':'';
+ $('#markers').hidden=!pointsVisible||technical;$('#marker-leaders').hidden=!pointsVisible||technical;$('#lot-status-symbols').style.visibility=pointsVisible&&technical?'visible':'hidden';$('#block-markers').hidden=!pointsVisible||tab!=='blocks';$('#block-layer').style.visibility=pointsVisible&&tab==='blocks'?'visible':'hidden';$('#lot-layer').style.visibility=pointsVisible&&technical?'visible':'hidden';
  stage.classList.toggle('show-blocks',tab==='blocks'&&pointsVisible);stage.classList.toggle('show-lots',technical&&pointsVisible);map.classList.toggle('technical-mode',technical);
- $('#map-mode-label').innerHTML=technical?'PLANTA DE LOTES · IDENTIFICAÇÃO ESQUEMÁTICA':'<i></i> IMPLANTAÇÃO INTERATIVA';
- $('#layers-btn').setAttribute('aria-pressed',pointsVisible);$('#layers-btn').lastElementChild.textContent=pointsVisible?'Pontos visíveis':'Mostrar pontos';updateSelection();window.SolarisExperience?.paint();
+ $('#map-mode-label').innerHTML=technical?'Modo planta':'<i></i> IMPLANTAÇÃO INTERATIVA';
+ $('#layers-btn').setAttribute('aria-pressed',pointsVisible);$('#layers-btn').lastElementChild.textContent=pointsVisible?'Pontos visíveis':'Mostrar pontos';updateSelection();layoutPlaceMarkers();window.SolarisExperience?.paint();
 }
 function showDetails(p,kind='places'){
  const isBlock=kind==='blocks',isLot=kind==='lots',title=isBlock?'Quadra '+p.n:isLot?lotLabel(p)+' · Quadra '+p.block:p.title;
- $('#detail-panel').hidden=false;$('#detail-panel').classList.toggle('block-detail',kind!=='places');$('#detail-panel').classList.toggle('no-image',!p.image);$('#detail-image-btn').hidden=!p.image;
+ $('#detail-panel').hidden=false;$('#detail-panel').classList.toggle('block-detail',kind!=='places');$('#detail-panel').classList.toggle('block-sheet',isBlock);$('#detail-panel').classList.toggle('lot-sheet',isLot);$('#detail-panel').classList.toggle('no-image',!p.image);$('#detail-image-btn').hidden=!p.image;
  if(p.image){$('#detail-image').src=p.image;$('#detail-image').alt=`Perspectiva ilustrativa: ${p.title}`;}
  $('#detail-kicker').textContent=isBlock?'SOLARIS / '+p.position:isLot?'SOLARIS / IDENTIFICAÇÃO DO LOTE':p.kicker;
  $('#detail-title').textContent=title;
@@ -154,4 +187,5 @@ image.addEventListener('load',ready,{once:true});image.addEventListener('error',
 setLayers();
 
 $('#lot-map').addEventListener('error',()=>toast('A planta de lotes não carregou. Atualize a página para tentar novamente.'));
+
 
