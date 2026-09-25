@@ -3,8 +3,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const out=path.resolve('solaris-dist');
-const VERSION='2026-09-25-solaris-translucent-logo-v3';
-const solarisFiles=['index.html','styles.css','app.js','experience.js','lots-data.js','lot-sizes.js','assets/solaris-logo-white-source.jpeg','assets/solaris-ambient.mp3','assets/masterplan.webp','assets/lotes.webp','assets/portaria.webp','assets/clube.webp','assets/lago.webp'];
+const VERSION='2026-09-25-solaris-environments-v4';
+const solarisFiles=['index.html','styles.css','app.js','experience.js','lots-data.js','lot-sizes.js','assets/solaris-logo-white-source.jpeg','assets/solaris-ambient.mp3','assets/masterplan.webp','assets/lotes.webp','assets/ambientes/hipica.webp','assets/ambientes/praca.webp','assets/ambientes/quadras.webp','assets/ambientes/portaria-alameda.webp','assets/ambientes/clube.webp','assets/ambientes/parque.webp','assets/ambientes/lago.webp','assets/ambientes/bosque.webp','assets/ambientes/portaria.webp'];
 const metropolitanFiles=['index.html','styles.css','app.js','assets/implantacao.png','assets/portaria.webp','assets/convivencia.webp','assets/logistica.webp','assets/visao-aerea.jpg'];
 const source=process.env.SOLARIS_SOURCE||'solaris';
 const metroSource=process.env.METROPOLITAN_SOURCE||'metropolitan';
@@ -25,8 +25,9 @@ for(const file of solarisFiles){const dest=path.join(out,file);fs.mkdirSync(path
 for(const file of metropolitanFiles){const dest=path.join(out,'metropolitan',file);fs.mkdirSync(path.dirname(dest),{recursive:true});if(file==='index.html')fs.writeFileSync(dest,fs.readFileSync(path.join(metroSource,file),'utf8').replace('<head>','<head>\n  <base href="/metropolitan/">'));else fs.copyFileSync(path.join(metroSource,file),dest);}
 fs.writeFileSync(path.join(out,'sw.js'),"self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.registration.unregister()));");
 fs.writeFileSync(path.join(out,'manifest.webmanifest'),JSON.stringify({name:'Solaris Residencial Resort',short_name:'Solaris',start_url:'/',scope:'/',display:'standalone',theme_color:'#10231e',background_color:'#10231e',lang:'pt-BR'}));
-fs.writeFileSync(path.join(out,'version.json'),JSON.stringify({version:VERSION,blocks:10,lots:249,institutionalLot:'C18',perspectives:4,newRenders:3,gameEnabled:false,musicEnabled:true,voiceEnabled:true,inventorySource:'Evora Enterprise',lotSource:'Solaris_Home_Resort_Urbanistico_22-07-25',lotLayer:'schematic identification',metropolitanPreserved:true}));
+fs.writeFileSync(path.join(out,'version.json'),JSON.stringify({version:VERSION,blocks:10,lots:249,institutionalLot:'C18',perspectives:10,suppliedPerspectives:9,gameEnabled:false,musicEnabled:true,voiceEnabled:true,inventorySource:'Evora Enterprise',lotSource:'Solaris_Home_Resort_Urbanistico_22-07-25',lotLayer:'schematic identification',metropolitanPreserved:true}));
 const expected=[...solarisFiles,...metropolitanFiles.map(p=>'metropolitan/'+p),'sw.js','manifest.webmanifest','version.json'].sort();
 const actual=fs.readdirSync(out,{recursive:true}).filter(p=>fs.statSync(path.join(out,p)).isFile()).sort();
 if(JSON.stringify(expected)!==JSON.stringify(actual))throw new Error('Unexpected public file');
-console.log(`${VERSION}: ${blocks.length} blocks, ${lots.length} unique parcels, 3 new renders. Metropolitan preserved; ${actual.length} public files.`);
+console.log(`${VERSION}: ${blocks.length} blocks, ${lots.length} unique parcels, 9 supplied environment perspectives. Metropolitan preserved; ${actual.length} public files.`);
+
