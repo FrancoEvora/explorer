@@ -32,3 +32,45 @@ dialog{color:var(--text);border:1px solid #728f9855;background:#153328;padding:0
 
 .map-marker[data-place="praca"]{transform:translate(15%,50%) scale(var(--marker-scale,1));transform-origin:0 0}.sidebar h1{font-size:27px;letter-spacing:-1px}.gallery-bottom .eyebrow{color:var(--accent)}
 @media(max-width:600px){.map-marker[data-place="praca"]{transform:translate(10%,65%) scale(var(--marker-scale,1));transform-origin:0 0}.sidebar h1{font-size:25px}}
+
+/* Keep the selected parcel visible through its information panel. */
+.detail-panel.block-detail {
+  background: rgba(16, 35, 30, .48);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-color: rgba(224, 199, 139, .35);
+  box-shadow: 0 8px 28px rgba(0, 15, 10, .2);
+}
+.block-detail .detail-copy {
+  text-shadow: 0 1px 3px rgba(0, 15, 10, .95), 0 0 8px rgba(0, 15, 10, .5);
+}
+.block-detail .detail-copy p,
+.block-detail .detail-copy .detail-note {
+  color: #f1f6f2;
+}
+.lot-pagination {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+}
+.lot-pagination .outline-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0 10px;
+  line-height: 1;
+  background: rgba(16, 35, 30, .58);
+  border-color: rgba(224, 199, 139, .65);
+}
+.lot-pagination .outline-button .icon {
+  display: block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+
