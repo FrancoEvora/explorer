@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071e27"><meta name="description" content="Explore o Solaris Business Center em uma implantação interativa. Conheça as quadras, os acessos e novas perspectivas do empreendimento.">
+  <title>Solaris | Explore o seu próximo endereço</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071e27'/%3E%3Ctext x='32' y='45' text-anchor='middle' fill='%2359dfd7' font-size='43' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E">
+  <link rel="preload" href="assets/masterplan.webp" as="image"><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip-link" href="#map">Ir para o mapa</a>
+<header class="header">
+  <button class="wordmark" id="brand-home" aria-label="Solaris, voltar à visão geral"><strong>SOLARIS<span class="brand-period">.</span></strong><span>RESIDENCIAL RESORT</span></button>
+  <nav class="topnav" aria-label="Navegação principal"><button class="nav-active" id="overview-btn"><span data-icon="map"></span><span>Explorar</span></button><button id="gallery-btn"><span data-icon="image"></span><span>Perspectivas</span></button></nav>
+  <div class="header-actions"><button class="icon-btn" id="help-btn" aria-label="Como navegar"><span data-icon="help"></span></button><button class="tour-button" id="tour-btn"><span data-icon="play"></span><span>Percurso guiado</span></button></div>
+</header>
+<div class="workspace">
+  <aside class="sidebar" id="sidebar" aria-label="Explore o empreendimento">
+    <button class="close-btn sidebar-close" id="sidebar-close" aria-label="Fechar lista de locais"><span data-icon="close"></span></button>
+    <div class="sidebar-top"><span class="eyebrow">UMA NOVA PERSPECTIVA</span><h1>Seu lugar.<br>Novas perspectivas.</h1><p>Conheça o empreendimento,<br>um lugar de cada vez.</p></div>
+    <div class="side-tabs" role="tablist" aria-label="Seleção do mapa"><button role="tab" aria-selected="true" aria-controls="places-list" id="places-tab">Destaques <span>09</span></button><button role="tab" aria-selected="false" aria-controls="blocks-list" id="blocks-tab">Quadras <span>10</span></button><button role="tab" aria-selected="false" aria-controls="lots-list" id="lots-tab">Lotes</button></div>
+    <div class="list-wrap"><div id="places-list" role="tabpanel" aria-labelledby="places-tab"></div><div id="blocks-list" role="tabpanel" aria-labelledby="blocks-tab" hidden></div><div id="lots-list" role="tabpanel" aria-labelledby="lots-tab" hidden><div class="lot-filters"><label for="lot-block">Quadra</label><select id="lot-block"><option value="">Todas as quadras</option></select><label for="lot-search">Buscar lote</label><input id="lot-search" type="search" placeholder="Ex.: A 01 ou 18" autocomplete="off"><p id="lot-results" role="status"></p></div><div id="lot-options"></div></div></div>
+    <div class="sidebar-bottom"><span data-icon="compass"></span><div><strong>Descubra cada conexão</strong><span>Toque nos pontos do mapa para explorar.</span></div></div>
+  </aside>
+  <main id="map" class="map" tabindex="0" aria-label="Mapa interativo do Solaris. Arraste para mover, use mais e menos para ampliar.">
+    <div class="map-surface" id="map-surface"><div class="map-stage" id="map-stage">
+      <img id="masterplan" src="assets/masterplan.webp" width="1448" height="1086" draggable="false" alt="Implantação renderizada do Solaris e Bairro Parque das Árvores, com lago, áreas residenciais, clube e hípica.">
+      <div class="technical-image-wrap" id="technical-wrap" hidden><img id="lot-map" src="assets/lotes.webp" width="2896" height="2432" draggable="false" alt="Planta ilustrada com a identificação dos 249 lotes das quadras A a J do Solaris."></div><svg class="site-overlay" id="portaria-implantacao" viewBox="0 0 1448 1086" role="img" aria-label="Implantação ilustrativa da portaria no ponto indicado">
+<title>Portaria — implantação ilustrativa</title>
+<g transform="translate(814.93 554.69) rotate(18)">
+<rect x="-17" y="-5" width="34" height="11" rx="2" fill="#14201d" opacity=".28" transform="translate(2 2)"/>
+<rect x="-17" y="-7" width="34" height="10" rx="1.2" fill="#d8c9a9" stroke="#f5e9ca" stroke-width=".65"/>
+<rect x="-15.8" y="-6" width="31.6" height="7.6" rx=".6" fill="#536059"/>
+<path d="M-13-5v6M-9-5v6M-5-5v6M5-5v6M9-5v6M13-5v6" stroke="#81877b" stroke-width=".6"/>
+<rect x="-4.3" y="-5.8" width="8.6" height="11.8" rx="1.2" fill="#ddd0b4" stroke="#f4e9d0" stroke-width=".65"/>
+<rect x="-3.1" y="-4.6" width="6.2" height="8.5" rx=".5" fill="#2f4844"/>
+<path d="M-15 6h9M6 6h9" stroke="#f4e6c3" stroke-width="1.3"/>
+<path d="M-14 6h2m3 0h2M7 6h2m3 0h2" stroke="#ab533c" stroke-width="1.35"/>
+<circle cx="-16" cy="5.5" r="1.1" fill="#ddd0b4"/><circle cx="16" cy="5.5" r="1.1" fill="#ddd0b4"/>
+</g></svg>
+<svg id="block-layer" viewBox="0 0 1448 1086" aria-label="Quadras do empreendimento"></svg>
+      <svg id="lot-layer" viewBox="0 0 1448 1086" aria-label="Lotes identificados"></svg><div id="selected-lot-marker" hidden></div><div id="markers" class="markers"></div>
+      <div id="block-markers" class="block-markers" hidden></div>
+    </div></div>
+    <div class="map-heading"><span class="map-kicker" id="map-mode-label"><i></i> IMPLANTAÇÃO INTERATIVA</span><span class="map-heading-title" id="map-heading-title">O Solaris, por inteiro.</span></div>
+    <div class="map-top-right"><button class="glass-btn" id="layers-btn" aria-pressed="true"><span data-icon="layers"></span><span>Pontos visíveis</span></button><button class="glass-btn icon-btn" id="fullscreen-btn" aria-label="Tela cheia"><span data-icon="expand"></span></button></div>
+    <div class="map-loading" id="map-loading" role="status"><span class="loader"></span>Preparando seu próximo ponto de vista…</div>
+    <div class="map-controls" aria-label="Controles do mapa"><button class="icon-btn" id="zoom-in" aria-label="Aproximar"><span data-icon="plus"></span></button><output id="zoom-label" aria-label="Ampliação">100%</output><button class="icon-btn" id="zoom-out" aria-label="Afastar"><span data-icon="minus"></span></button><span class="control-divider"></span><button class="icon-btn" id="fit-btn" aria-label="Mostrar empreendimento inteiro"><span data-icon="focus"></span></button><button class="icon-btn" id="tilt-btn" aria-label="Alternar perspectiva do mapa" aria-pressed="false"><span data-icon="perspective"></span></button></div>
+    <div class="map-hint" id="map-hint"><span data-icon="hand"></span><span>Arraste para explorar · Role ou pince para aproximar</span></div>
+    <button class="mobile-explore glass-btn" id="mobile-explore"><span data-icon="list"></span>Explorar locais</button>
+    <section class="detail-panel" id="detail-panel" hidden aria-label="Detalhes do ponto selecionado">
+      <button class="close-btn" id="close-detail" aria-label="Fechar detalhes"><span data-icon="close"></span></button>
+      <button class="detail-image-btn" id="detail-image-btn" aria-label="Ampliar perspectiva"><img id="detail-image" alt=""><span><span data-icon="expand"></span>Ampliar perspectiva</span></button>
+      <div class="detail-copy"><span class="eyebrow" id="detail-kicker"></span><h2 id="detail-title"></h2><p id="detail-text"></p><div class="detail-tags" id="detail-tags"></div><p class="detail-note" id="detail-note"></p><div id="detail-lots" hidden></div><button class="text-button" id="detail-action">Ver perspectiva <span data-icon="arrow"></span></button></div>
+    </section>
+    <div class="tour-player" id="tour-player" hidden><div class="tour-progress" id="tour-progress"></div><span class="tour-count" id="tour-count"></span><strong id="tour-name"></strong><div><button class="icon-btn" id="tour-prev" aria-label="Ponto anterior"><span data-icon="left"></span></button><button class="icon-btn" id="tour-pause" aria-label="Pausar percurso"><span data-icon="pause"></span></button><button class="icon-btn" id="tour-next" aria-label="Próximo ponto"><span data-icon="right"></span></button><button class="icon-btn" id="tour-stop" aria-label="Encerrar percurso"><span data-icon="close"></span></button></div></div>
+    <div class="presentation-bar" id="presentation-bar" hidden><button class="glass-btn" id="exit-presentation"><span data-icon="collapse"></span>Voltar à exploração</button></div>
+  </main>
+</div>
+<footer class="footer"><div><span class="eyebrow">OUTROS PONTOS DE VISTA</span><span class="footer-caption">Entre na experiência.</span></div><nav class="scene-strip" aria-label="Perspectivas do Solaris"><button class="scene-card" data-scene="aerea"><img src="assets/masterplan.webp" alt="" loading="lazy"><span><small>01 / VISÃO DO CONJUNTO</small><strong>Visão aérea</strong></span><span data-icon="arrow"></span></button><button class="scene-card" data-scene="portaria"><img src="assets/portaria.webp" alt="" loading="lazy"><span><small>02 / CHEGADA</small><strong>Portaria</strong></span><span data-icon="arrow"></span></button><button class="scene-card" data-scene="clube"><img src="assets/clube.webp" alt="" loading="lazy"><span><small>03 / LAZER</small><strong>Clube e piscinas</strong></span><span data-icon="arrow"></span></button><button class="scene-card" data-scene="lago"><img src="assets/lago.webp" alt="" loading="lazy"><span><small>04 / NATUREZA</small><strong>Lago e deck</strong></span><span data-icon="arrow"></span></button></nav><button id="present-btn" class="presentation-button" aria-label="Modo apresentação"><span data-icon="expand"></span><span>Apresentação</span></button></footer>
+<div class="fine-print">Perspectivas ilustrativas · planta de lotes esquemática · sem indicação de disponibilidade.</div>
+<dialog id="gallery-dialog" class="gallery-dialog" aria-labelledby="gallery-title"><div class="gallery-shell"><div class="gallery-bar"><div><span class="eyebrow">SOLARIS / PERSPECTIVAS</span><h2 id="gallery-title">Visão aérea do Solaris</h2></div><button class="icon-btn" id="gallery-close" aria-label="Fechar perspectivas"><span data-icon="close"></span></button></div><div class="gallery-viewport" id="gallery-viewport"><img id="gallery-image" draggable="false" alt=""><button class="gallery-arrow prev" id="gallery-prev" aria-label="Perspectiva anterior"><span data-icon="left"></span></button><button class="gallery-arrow next" id="gallery-next" aria-label="Próxima perspectiva"><span data-icon="right"></span></button><div class="gallery-zoom"><button class="icon-btn" id="gallery-minus" aria-label="Reduzir perspectiva"><span data-icon="minus"></span></button><button id="gallery-reset" aria-label="Restaurar perspectiva">100%</button><button class="icon-btn" id="gallery-plus" aria-label="Ampliar perspectiva"><span data-icon="plus"></span></button></div></div><div class="gallery-bottom"><div><p id="gallery-description"></p><small>Perspectiva ilustrativa · arquitetura e paisagismo conceituais</small></div><div class="gallery-dots" id="gallery-dots"></div><button class="outline-button" id="gallery-map"><span data-icon="map"></span>Ver no mapa</button></div></div></dialog>
+<dialog class="help-dialog" id="help-dialog" aria-labelledby="help-title"><button class="close-btn" id="help-close" aria-label="Fechar ajuda"><span data-icon="close"></span></button><span class="eyebrow">SEU GUIA DE EXPLORAÇÃO</span><h2 id="help-title">Cada detalhe,<br>ao seu alcance.</h2><div class="help-row"><span data-icon="hand"></span><div><strong>Explore no seu ritmo</strong><p>Arraste o mapa. Use a roda do mouse ou dois dedos para aproximar.</p></div></div><div class="help-row"><span data-icon="pin"></span><div><strong>Escolha um lugar</strong><p>Escolha Destaques, Quadras ou Lotes. Busque um lote pelo número ou toque nele na planta.</p></div></div><div class="help-row"><span data-icon="image"></span><div><strong>Mude o ponto de vista</strong><p>Abra as perspectivas, amplie os detalhes e navegue pelas imagens.</p></div></div><div class="help-row"><span data-icon="keyboard"></span><div><strong>Também pelo teclado</strong><p>Use + e − para ampliar, setas para mover e 0 para ver tudo. Esc fecha os painéis.</p></div></div><button class="primary-button" id="help-start">Começar a explorar <span data-icon="arrow"></span></button></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="lots-data.js" defer></script>
+<script src="app.js" defer></script>
+</body></html>

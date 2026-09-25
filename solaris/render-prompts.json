@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen built-in",
+  "reference": "Solaris masterplan supplied by the owner; conceptual architectural perspectives",
+  "briefs": [
+    {
+      "id": "portaria",
+      "prompt": "Use case: stylized-concept. Create a NEW premium photorealistic architectural render of the entrance gate for Solaris Residencial Resort, using the supplied masterplan ONLY as site/landscape context reference. This is a conceptual close perspective of the small entrance near the clubhouse and sport courts, NOT the exterior roundabout. Low contemporary single storey horizontal porte-cochere, natural pale limestone, warm wood louvers, discreet glass reception, two car access lanes and slim barrier arms, rich Brazilian tropical landscape with yellow flowering trees and palms. Quiet refined residential resort architecture. Camera human eye level from the entrance roadway, wide landscape 16:9, elegant late-afternoon natural light, physically accurate materials, soft realistic shadows, editorial architectural visualization, no tall towers, no industrial buildings. No text, no logos, no watermark, no labels or interface. Do not draw an aerial map; single immersive architectural scene."
+    },
+    {
+      "id": "clube",
+      "prompt": "Use case: stylized-concept. Create a NEW premium photorealistic architectural visualization for Solaris Residencial Resort. Supplied masterplan is context reference: interpret its clubhouse amenity beside the long turquoise rectangular pool as a close immersive architectural perspective. A low one-story contemporary club pavilion in natural light stone, warm wood, large glass openings, pool deck with restrained loungers and parasols, lush palm and Brazilian woodland landscape. Camera from one pool corner, 24mm architectural view, wide landscape16:9 with carefully composed layers of pool foreground, elegant pavilion middle distance, trees background; warm late afternoon sun, immaculate realistic water caustics and fine natural materials. Conceptual visualization of depicted amenity, not a new site plan. Do not add waterparks, towers, mountains, sea or unrelated amenities. No text, logos, labels, watermarks or UI."
+    },
+    {
+      "id": "lago",
+      "prompt": "Use case: stylized-concept. Create a NEW premium photorealistic architectural landscape visualization for Solaris Residencial Resort. Supplied masterplan is only a contextual reference: render its large left-side elongated blue lake, wooden waterside deck and small timber shaded gazebos with rich Brazilian forest around it. Immersive human-scale view from the timber deck looking along the tranquil lake; curved forested shoreline, palms, native broadleaf trees and subtle yellow blossoms, deck seating, warm wood pergola at right foreground, realistic water reflections. Wide landscape16:9, serene bright late afternoon light, premium architectural editorial quality, finely detailed materials and planting. No houses on water, no towers, no hills not shown, no boats needed, no invented amenities. No text, logo, watermark, labels or UI. Single coherent image, not collage."
+    }
+  ]
+}
