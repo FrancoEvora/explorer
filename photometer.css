@@ -1,0 +1,45 @@
+
+/* Explorer · Fotômetro de campo v2 */
+#explorer-photo-studio .ps-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+#explorer-photo-studio .ps-logo{overflow:hidden;background:transparent}
+#explorer-photo-studio .ps-logo img{display:block;width:45px;height:45px;object-fit:contain}
+#explorer-photo-studio .pm-card{overflow:hidden}
+#explorer-photo-studio .pm-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+#explorer-photo-studio .pm-title h2{font-size:clamp(23px,4vw,29px);margin:6px 0;letter-spacing:-.05em}
+#explorer-photo-studio .pm-chip{color:#d7ff78;border:1px solid #c7ff1950;border-radius:100px;background:#c7ff1913;padding:7px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+#explorer-photo-studio .pm-layout{display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,1fr);gap:18px}
+#explorer-photo-studio .pm-camera{position:relative;overflow:hidden;min-height:240px;border-radius:17px;background:#06171f;border:1px solid #385b69;aspect-ratio:4/3}
+#explorer-photo-studio #pm-video{display:block;width:100%;height:100%;object-fit:cover;background:#071924;cursor:crosshair}
+#explorer-photo-studio .pm-placeholder{position:absolute;inset:0;z-index:2;background:linear-gradient(140deg,#142b36,#061923);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:18px;pointer-events:none}
+#explorer-photo-studio .pm-placeholder[hidden]{display:none!important}
+#explorer-photo-studio .pm-placeholder span{font-size:40px;color:#c7ff19}
+#explorer-photo-studio .pm-placeholder small{font-size:12px;color:#9db7c2;max-width:270px}
+#explorer-photo-studio .pm-reticle{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);height:76px;width:76px;border:1.5px solid #d8ff55bb;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px #06232890;display:grid;place-items:center}
+#explorer-photo-studio .pm-reticle:before,#explorer-photo-studio .pm-reticle:after{content:"";position:absolute;background:#d7ff55cf}
+#explorer-photo-studio .pm-reticle:before{height:1px;width:23px}
+#explorer-photo-studio .pm-reticle:after{height:23px;width:1px}
+#explorer-photo-studio .pm-video-label{position:absolute;bottom:0;left:0;right:0;padding:13px;font-size:10px;font-weight:850;letter-spacing:.07em;background:linear-gradient(transparent,#06151fe8);color:#e2eef4;pointer-events:none}
+#explorer-photo-studio .pm-settings{display:grid;gap:12px;align-content:start}
+#explorer-photo-studio .pm-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#explorer-photo-studio .pm-hint{color:#b5ced7;font-size:12px}
+#explorer-photo-studio .pm-inline-value{float:right;color:#d6ff76;font-size:12px}
+#explorer-photo-studio #pm-ev{appearance:none;-webkit-appearance:none;display:block;width:100%;height:10px;min-height:0;margin:17px 0 12px;padding:0;border:0;outline:0;border-radius:99px;background:linear-gradient(90deg,#23485e,#d5ff5a)}
+#explorer-photo-studio #pm-ev::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:23px;height:23px;border:3px solid #041c24;border-radius:50%;background:#e3ff96;box-shadow:0 0 0 2px #c7ff19}
+#explorer-photo-studio #pm-ev::-moz-range-thumb{width:19px;height:19px;border:3px solid #041c24;border-radius:50%;background:#e3ff96}
+#explorer-photo-studio .pm-result{margin-top:17px;padding:17px;background:#051b25;border:1px solid #234f5d;border-radius:18px}
+#explorer-photo-studio .pm-results{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+#explorer-photo-studio .pm-results strong{display:block;font-size:clamp(23px,4vw,34px);font-weight:900;letter-spacing:-.055em;color:#f9fff2;line-height:1.2;white-space:nowrap}
+#explorer-photo-studio .pm-results small{font-size:12px;color:#a9c6d0}
+#explorer-photo-studio .pm-overline{display:block;color:#c7ff19;font-weight:850;font-size:10px;letter-spacing:.07em;padding-bottom:4px}
+#explorer-photo-studio .pm-rail{height:8px;border-radius:40px;background:linear-gradient(90deg,#23415d 0%,#297a8f 42%,#a4d34e 74%,#e6f798 100%);margin-top:19px;position:relative}
+#explorer-photo-studio .pm-needle{position:absolute;top:50%;width:4px;height:22px;border-radius:5px;background:#fff;box-shadow:0 0 0 2px #051c25,0 2px 7px #000;transform:translate(-50%,-50%)}
+#explorer-photo-studio .pm-scale{display:flex;justify-content:space-between;color:#90aeb9;font-size:10px;margin:6px 0 13px}
+#explorer-photo-studio .pm-result .ps-small{margin:7px 0}
+#explorer-photo-studio .pm-status{color:#d1dfe7;font-size:12px;line-height:1.6;min-height:20px}
+#explorer-photo-studio .pm-preview-icons{display:flex;gap:10px}
+@media(max-width:770px){
+ #explorer-photo-studio .pm-layout{grid-template-columns:1fr}
+ #explorer-photo-studio .pm-camera{aspect-ratio:16/10;min-height:210px}
+ #explorer-photo-studio .ps-tab{font-size:10px;padding:8px 2px}
+}
+@media(max-width:430px){#explorer-photo-studio .pm-results{grid-template-columns:1fr 1.15fr;gap:9px}#explorer-photo-studio .pm-results strong{font-size:23px}#explorer-photo-studio .pm-camera{min-height:190px}}
