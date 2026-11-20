@@ -2,6 +2,17 @@
 
 Extensão não destrutiva para o **Explorer 4.2.3**, mantendo trilhas, áreas de risco, ocorrências, comunidade e SOS.
 
+## Identidade visual
+- Marca Explorer redesenhada: rosa dos ventos e diafragma, em SVG vetorial.
+- Ícone PNG 180 × 180 para a tela de início do iPhone.
+
+## Fotômetro
+- Leitura de brilho relativa pela câmera (região pontual móvel ou quadro inteiro).
+- Calibração por EV de referência escolhido ou informado pelo usuário; **não mede lux absoluto**.
+- Cálculo EV100 para combinações de ISO, f e velocidade.
+- Prévia local sem gravação de vídeo ou upload; câmera liberada ao fechar ou trocar de aba.
+- No iOS, permissões de câmera precisam ser concedidas e a medição é orientativa devido à exposição automática.
+
 ## Conteúdo
 - Luz natural e posição do Sol por coordenada GPS ou manual, com janelas aproximadas de hora dourada.
 - Meteorologia pontual via Open-Meteo (online).
