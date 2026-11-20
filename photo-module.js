@@ -46,14 +46,14 @@ function deviceStatus(){
 }
 function mount(){
  if($('explorer-photo-studio'))return;
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/photo-module.css?v=1';document.head.appendChild(sheet);
+ const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/photo-module.css?v=2';document.head.appendChild(sheet);
  const btn=document.createElement('button');btn.type='button';btn.id='explorer-photo-launch';btn.textContent='📷  Fotografia';btn.setAttribute('aria-label','Abrir fotografia de campo no Explorer');btn.onclick=openStudio;document.body.appendChild(btn);
  const dlg=document.createElement('div');dlg.id='explorer-photo-studio';dlg.hidden=true;dlg.setAttribute('role','dialog');dlg.setAttribute('aria-modal','true');dlg.setAttribute('aria-label','Fotografia de campo');
  dlg.innerHTML=`<div class="ps-wrap">
- <div class="ps-head"><div class="ps-brand"><span class="ps-logo">◉</span><span>EXPLORER <b>/ FOTO</b><small style="display:block;color:#a8c2ce;font-size:10px;letter-spacing:.1em">FOTOGRAFIA DE NATUREZA</small></span></div><button class="ps-close" type="button" data-act="close" aria-label="Fechar">×</button></div>
+ <div class="ps-head"><div class="ps-brand"><span class="ps-logo"><img src="/explorer-mark.svg?v=2.0.0" alt="Símbolo Explorer"></span><span>EXPLORER <b>/ FOTO</b><small style="display:block;color:#a8c2ce;font-size:10px;letter-spacing:.1em">FOTOGRAFIA DE NATUREZA</small></span></div><button class="ps-close" type="button" data-act="close" aria-label="Fechar">×</button></div>
  <section class="ps-hero"><span class="ps-eyebrow">WILDLIFE · TRILHAS · FOTOGRAFIA</span><h1>A luz certa.<br>A lente certa. O instante certo.</h1><p class="ps-muted">Seu estúdio de campo, integrado ao Explorer.</p></section>
  <nav class="ps-tabs" aria-label="Ferramentas fotográficas">
- <button type="button" class="ps-tab" data-tab="light">☀ Luz & local</button><button type="button" class="ps-tab" data-tab="assist">◎ Assistente</button><button type="button" class="ps-tab" data-tab="gear">▤ Mochila</button><button type="button" class="ps-tab" data-tab="diary">▧ Diário</button></nav>
+ <button type="button" class="ps-tab" data-tab="light">☀ Luz & local</button><button type="button" class="ps-tab" data-tab="assist">◎ Assistente</button><button type="button" class="ps-tab" data-tab="meter">◉ Fotômetro</button><button type="button" class="ps-tab" data-tab="gear">▤ Mochila</button><button type="button" class="ps-tab" data-tab="diary">▧ Diário</button></nav>
  <div class="ps-body" id="explorer-photo-body"></div><p class="ps-foot">Dados deste módulo são privados e ficam neste dispositivo. Nenhum local de avistamento é publicado automaticamente.</p></div>`;
  document.body.appendChild(dlg);
  const status=document.createElement('div');status.id='explorer-photo-toast';status.setAttribute('role','status');document.body.appendChild(status);
@@ -65,12 +65,13 @@ function mount(){
 function openStudio(){
  const dlg=$('explorer-photo-studio');if(!dlg)return;previousFocus=document.activeElement;dlg.hidden=false;render();dlg.querySelector('[data-act=close]')?.focus();
 }
-function closeStudio(){$('explorer-photo-studio').hidden=true;(previousFocus||$('explorer-photo-launch'))?.focus?.()}
+function closeStudio(){window.ExplorerPhotometer?.stop?.();$('explorer-photo-studio').hidden=true;(previousFocus||$('explorer-photo-launch'))?.focus?.()}
 function render(){
  document.querySelectorAll('#explorer-photo-studio [data-tab]').forEach(el=>{const on=el.dataset.tab===activeTab;el.classList.toggle('active',on);el.setAttribute('aria-selected',String(on))});
  const body=$('explorer-photo-body');if(!body)return;
  if(activeTab==='light')body.innerHTML=viewLight();
  if(activeTab==='assist')body.innerHTML=viewAssist();
+ if(activeTab==='meter'){body.innerHTML=window.ExplorerPhotometer?.render?.()||'<div class="ps-card">Fotômetro indisponível.</div>';window.ExplorerPhotometer?.mount?.()}
  if(activeTab==='gear')body.innerHTML=viewGear();
  if(activeTab==='diary'){body.innerHTML=viewDiary();showEntries()}
 }
@@ -182,7 +183,7 @@ async function submit(event){
 }
 async function click(event){
  const el=event.target.closest('button');if(!el)return;
- if(el.dataset.tab){activeTab=el.dataset.tab;render();return}
+ if(el.dataset.tab){if(activeTab==='meter'&&el.dataset.tab!=='meter')window.ExplorerPhotometer?.stop?.();activeTab=el.dataset.tab;render();return}
  const action=el.dataset.act;if(!action)return;
  if(action==='close')closeStudio();
  if(action==='coordinates'){$('xp-coords').style.display=$('xp-coords').style.display==='none'?'grid':'none'}
