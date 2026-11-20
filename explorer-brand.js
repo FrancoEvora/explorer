@@ -18,7 +18,7 @@
     }
     if (!document.querySelector('link[data-explorer-brand="apple"]')) {
       const touch = document.createElement('link');
-      touch.rel = 'apple-touch-icon'; touch.href = src;
+      touch.rel = 'apple-touch-icon'; touch.href = '/explorer-touch-icon.png?v=2.0.0';
       touch.setAttribute('data-explorer-brand', 'apple');
       document.head.appendChild(touch);
     }
