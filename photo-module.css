@@ -1,0 +1,51 @@
+
+#explorer-photo-launch{position:fixed;z-index:1020;left:14px;bottom:calc(92px + env(safe-area-inset-bottom));border:1px solid #e5ff8c;background:#c7ff19;color:#071c22;border-radius:100px;padding:12px 16px;font:800 13px system-ui,sans-serif;box-shadow:0 13px 34px #0009;cursor:pointer}
+#explorer-photo-launch[hidden],#explorer-photo-studio[hidden]{display:none!important}
+#explorer-photo-studio{position:fixed;z-index:2140;inset:0;overflow:auto;overscroll-behavior:contain;background:#051721f7;color:#f6fbff;font:14px/1.5 Inter,system-ui,-apple-system,sans-serif;padding:12px 12px calc(26px + env(safe-area-inset-bottom));box-sizing:border-box}
+#explorer-photo-studio *{box-sizing:border-box}
+#explorer-photo-studio button,#explorer-photo-studio input,#explorer-photo-studio select,#explorer-photo-studio textarea{font:inherit}
+#explorer-photo-studio button{cursor:pointer}
+#explorer-photo-studio .ps-wrap{max-width:960px;margin:auto}
+#explorer-photo-studio .ps-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:10px 0 20px}
+#explorer-photo-studio .ps-brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:900;letter-spacing:-.045em}
+#explorer-photo-studio .ps-brand b{color:#c7ff19}
+#explorer-photo-studio .ps-logo{display:grid;place-items:center;width:45px;height:45px;border-radius:13px;color:#061820;background:#c7ff19;font-size:23px}
+#explorer-photo-studio .ps-close{border:1px solid #3b6574;border-radius:12px;color:#fff;background:#163444;width:44px;height:44px;font-size:24px}
+#explorer-photo-studio .ps-hero{background:linear-gradient(118deg,#173e46,#0d2732 54%,#224b38);border:1px solid #44616c;border-radius:24px;padding:25px;position:relative;overflow:hidden}
+#explorer-photo-studio .ps-hero:after{content:"◎";position:absolute;right:-10px;top:-50px;font-size:220px;opacity:.09}
+#explorer-photo-studio .ps-eyebrow{color:#c7ff19;letter-spacing:.14em;font-size:11px;font-weight:900}
+#explorer-photo-studio .ps-hero h1{font-size:clamp(26px,5vw,42px);line-height:1.08;letter-spacing:-.05em;margin:9px 0 10px;position:relative;z-index:1}
+#explorer-photo-studio .ps-muted{color:#a6c0cd;font-size:13px}
+#explorer-photo-studio .ps-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0;padding:6px;background:#0e2b3a;border-radius:17px;border:1px solid #34505e}
+#explorer-photo-studio .ps-tab{border:0;background:transparent;color:#a7beca;padding:11px 5px;border-radius:12px;min-height:44px;font-size:12px;font-weight:800}
+#explorer-photo-studio .ps-tab.active{background:#c7ff19;color:#0a1c24}
+#explorer-photo-studio .ps-body{display:grid;gap:14px}
+#explorer-photo-studio .ps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#explorer-photo-studio .ps-card{min-width:0;background:linear-gradient(140deg,#0d2a38,#09212d);border:1px solid #2d4b5b;border-radius:21px;padding:20px}
+#explorer-photo-studio .ps-card h2{font-size:17px;letter-spacing:-.03em;margin:0 0 14px}
+#explorer-photo-studio .ps-card p{margin:8px 0}
+#explorer-photo-studio .ps-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#explorer-photo-studio .ps-big{font-size:26px;font-weight:900;letter-spacing:-.05em;line-height:1.2}
+#explorer-photo-studio .ps-big small{display:block;font-size:12px;color:#adc4d0;font-weight:600;letter-spacing:0}
+#explorer-photo-studio .ps-field{display:grid;gap:6px;color:#dce9ec;font-size:12px;font-weight:800}
+#explorer-photo-studio .ps-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#explorer-photo-studio .ps-field input,#explorer-photo-studio .ps-field select,#explorer-photo-studio .ps-field textarea{display:block;width:100%;min-height:44px;padding:12px;border-radius:11px;background:#051824;color:white;border:1px solid #375b6b;outline:none}
+#explorer-photo-studio .ps-field textarea{min-height:88px;resize:vertical}
+#explorer-photo-studio .ps-field input:focus,#explorer-photo-studio .ps-field select:focus,#explorer-photo-studio .ps-field textarea:focus{border-color:#c7ff19}
+#explorer-photo-studio .ps-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 15px;border:1px solid #3c6474;border-radius:12px;background:#1b4050;color:white;font-size:12px;font-weight:900;text-align:center}
+#explorer-photo-studio .ps-btn.primary{background:#c7ff19;border-color:#c7ff19;color:#091b21}
+#explorer-photo-studio .ps-btn.danger{background:#5e2938;border-color:#934256;color:#ffdae2}
+#explorer-photo-studio .ps-btn:disabled{opacity:.5}
+#explorer-photo-studio .ps-result{padding:16px;background:#1c3633;border:1px solid #729c64;border-radius:15px}
+#explorer-photo-studio .ps-result strong{color:#c7ff19}
+#explorer-photo-studio .ps-info{padding:12px;border-radius:12px;background:#35402853;border-left:3px solid #e4bc67;color:#e7d7ad;font-size:12px}
+#explorer-photo-studio .ps-line{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;border-top:1px solid #ffffff18;padding:14px 0}
+#explorer-photo-studio .ps-line:first-child{border-top:0}
+#explorer-photo-studio .ps-label{padding:5px 9px;border-radius:20px;border:1px solid #c7ff1950;background:#c7ff1910;color:#cfff76;font-size:11px;font-weight:800}
+#explorer-photo-studio .ps-thumb{width:90px;height:74px;object-fit:cover;border-radius:10px;background:#173746}
+#explorer-photo-studio .ps-small{font-size:11px;color:#a2bbc7}
+#explorer-photo-studio .ps-foot{margin:20px 0;text-align:center;color:#91acb7;font-size:11px}
+#explorer-photo-toast{position:fixed;z-index:2300;bottom:25px;left:50%;transform:translate(-50%,30px);opacity:0;background:#d7ff64;color:#091d21;border-radius:13px;padding:12px 15px;max-width:90vw;font:800 13px system-ui,sans-serif;pointer-events:none;transition:.2s}
+#explorer-photo-toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:680px){#explorer-photo-studio .ps-grid,#explorer-photo-studio .ps-fields{grid-template-columns:1fr}#explorer-photo-studio .ps-card{padding:16px}#explorer-photo-studio .ps-hero{padding:20px}#explorer-photo-studio .ps-tabs{gap:3px}#explorer-photo-studio .ps-tab{font-size:11px;padding:9px 3px}}
+@media(prefers-reduced-motion:reduce){#explorer-photo-toast{transition:none}}
