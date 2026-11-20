@@ -22,7 +22,7 @@ module.exports = async function explorerHandler(req, res) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(502).send('A base do Explorer mudou. Publicação fotográfica suspensa por segurança.');
     }
-    const mark = '<link rel="icon" type="image/svg+xml" href="/explorer-mark.svg?v=2.0.0"><link rel="stylesheet" href="/photometer.css?v=2.0.0">';
+    const mark = '<link rel="icon" type="image/svg+xml" href="/explorer-mark.svg?v=2.0.0"><link rel="apple-touch-icon" sizes="180x180" href="/explorer-touch-icon.png?v=2.0.0"><link rel="stylesheet" href="/photometer.css?v=2.0.0">';
     const scripts = [
       '<script defer src="/explorer-brand.js?v=2.0.0"></script>',
       '<script defer src="/photometer.js?v=2.0.0"></script>',
